@@ -1,4 +1,5 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { NewNote } from './src/modules/basic/newNote';
 
 // Remember to rename these classes and interfaces!
 
@@ -12,9 +13,26 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
+	private newNoteManager: NewNote;
 
 	async onload() {
 		await this.loadSettings();
+		
+		this.newNoteManager = new NewNote(this.app);
+
+		// 새 노트 생성 명령어 추가
+		this.addCommand({
+			id: 'create-new-note',
+			name: '새 노트 생성',
+			callback: async () => {
+				try {
+					const newFile = await this.newNoteManager.createNewNote();
+					new Notice(`새 노트가 생성되었습니다: ${newFile.path}`);
+				} catch (error) {
+					new Notice('노트 생성 중 오류가 발생했습니다.');
+				}
+			}
+		});
 
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
