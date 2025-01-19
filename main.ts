@@ -5,6 +5,7 @@ import { UpdateTags } from './src/modules/basic/updateTags';
 import { AILSSSettingTab } from './src/modules/settings/settingTab';
 import { RenameAttachments } from './src/modules/basic/renameAttachments';
 import { Potentiate } from './src/modules/basic/potentiate';
+import { DeleteLink } from './src/modules/basic/deleteLink';
 
 import { AILSSSettings, DEFAULT_SETTINGS } from './src/modules/settings/settings';
 
@@ -17,6 +18,7 @@ export default class AILSSPlugin extends Plugin {
 	private updateTagsManager: UpdateTags;
 	private renameAttachmentsManager: RenameAttachments;
 	private potentiateManager: Potentiate;
+	private deleteLinkManager: DeleteLink;
 
 	async onload() {
 		await this.loadSettings();
@@ -26,6 +28,7 @@ export default class AILSSPlugin extends Plugin {
 		this.updateTagsManager = new UpdateTags(this.app, this);
 		this.renameAttachmentsManager = new RenameAttachments(this.app);
 		this.potentiateManager = new Potentiate(this.app, this);
+		this.deleteLinkManager = new DeleteLink(this.app, this);
 
 		// 리본 메뉴에 새 노트 생성 아이콘 추가
 		this.addRibbonIcon('file-plus', '새 노트 생성', () => {
@@ -87,6 +90,13 @@ export default class AILSSPlugin extends Plugin {
 			id: 'potentiate-note',
 			name: '노트 강화',
 			callback: () => this.potentiateManager.potentiateNote()
+		});
+
+		// 링크 삭제 명령어 추가
+		this.addCommand({
+			id: 'delete-link',
+			name: '선택한 링크와 파일 삭제',
+			editorCallback: () => this.deleteLinkManager.deleteLink()
 		});
 
 		// This adds a complex command that can check whether the current state of the app allows execution of the command
