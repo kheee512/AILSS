@@ -1,8 +1,12 @@
-import { App, TFile } from 'obsidian';
+import { App, Notice, TFile, MarkdownView } from 'obsidian';
 import { moment } from 'obsidian';
+import type AILSSPlugin from 'main';
 
 export class NewNote {
-    constructor(private app: App) {}
+    constructor(
+        private app: App,
+        private plugin: AILSSPlugin
+    ) {}
 
     async createNewNote() {
         const now = moment();
@@ -10,34 +14,52 @@ export class NewNote {
         // 폴더 경로 생성 (YY/MM/DD/HH/)
         const folderPath = now.format('YY/MM/DD/HH');
         
-        // ID 생성 (YYMMDDHHmmss)
-        const noteId = now.format('YYMMDDHHmmss');
-        
         // ISO 형식의 현재 시각
         const activatedTime = now.format('YYYY-MM-DDTHH:mm:ss');
 
+        // 기본 태그 가져오기
+        const defaultTags = this.plugin.settings.defaultTags;
+
         // 프론트매터와 내용 생성
         const noteContent = `---
-ID: ${noteId}
 Potentiation: 0
 Activated: ${activatedTime}
 tags:
-  - Initial
+${defaultTags.map(tag => `  - ${tag}`).join('\n')}
 ---
 `;
 
         try {
-            // 폴더가 없으면 생성
-            await this.app.vault.createFolder(folderPath);
+            // 폴더가 존재하지 않을 때만 생성
+            if (!(await this.app.vault.adapter.exists(folderPath))) {
+                await this.app.vault.createFolder(folderPath);
+            }
+            
+            // 사용 가능한 파일명 찾기
+            let fileName = 'untitled.md';
+            let counter = 1;
+            
+            while (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
+                fileName = `untitled-${counter}.md`;
+                counter++;
+            }
             
             // 노트 생성
             const newFile = await this.app.vault.create(
-                `${folderPath}/${noteId}.md`,
+                `${folderPath}/${fileName}`,
                 noteContent
             );
 
+            // 설정에 따라 새 탭에서 파일 열기
+            if (this.plugin.settings.openInNewTab) {
+                const leaf = this.app.workspace.getLeaf('tab');
+                await leaf.openFile(newFile);
+            }
+
+            new Notice(`새 노트가 생성되었습니다`);
             return newFile;
         } catch (error) {
+            new Notice('노트 생성 중 오류가 발생했습니다.');
             console.error('Error creating new note:', error);
             throw error;
         }
