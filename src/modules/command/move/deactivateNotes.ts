@@ -1,11 +1,12 @@
 import { App, Notice, TFile, Modal } from 'obsidian';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
 import { showTagSelectionDialog } from '../../../components/tagSelectionModal';
-import { CleanEmptyFolders } from '../delete/cleanEmptyFolders';
+import { CleanEmptyFolders } from '../../maintenance/cleanEmptyFolders';
 import type AILSSPlugin from '../../../../main';
-
+import { PathSettings } from '../../maintenance/settings/pathSettings';
+import { moment } from 'obsidian';
 export class DeactivateNotes {
-    private static readonly DEACTIVATED_ROOT = 'deactivated';
+    private static readonly DEACTIVATED_ROOT = PathSettings.DEACTIVATED_ROOT;
     
     private app: App;
     private plugin: AILSSPlugin;
@@ -74,7 +75,7 @@ export class DeactivateNotes {
         const now = new Date();
         const mainTag = tags[0].replace(/^#/, '').replace(/\//g, '-');
         const year = String(now.getFullYear()).slice(-2);
-        const deactivatePath = `${DeactivateNotes.DEACTIVATED_ROOT}/${mainTag}/${year}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}/${String(now.getHours()).padStart(2, '0')}`;
+        const deactivatePath = `${DeactivateNotes.DEACTIVATED_ROOT}/${mainTag}/${PathSettings.getTimestampedPath(moment())}`;
         
         await this.ensureDeactivatedFolder();
         await this.createFolderIfNotExists(deactivatePath);

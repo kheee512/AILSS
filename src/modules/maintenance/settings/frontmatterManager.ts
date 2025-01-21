@@ -19,8 +19,8 @@ export class FrontmatterManager {
 
     private getDefaultFrontmatter(now: moment.Moment): DefaultFrontmatterConfig {
         return {
-            Created: now.format('YYYY-MM-DDTHH:mm:ss'),
-            Activated: now.format('YYYY-MM-DDTHH:mm:ss'),
+            Created: now.format('YYYY-MM-DD HH:mm'),
+            Activated: now.format('YYYY-MM-DD HH:mm'),
             Potentiation: FrontmatterManager.INITIAL_POTENTIATION,
             tags: [...FrontmatterManager.DEFAULT_TAGS]
         };

@@ -1,7 +1,8 @@
 import { App, Notice, TFile, TFolder } from 'obsidian';
 import type AILSSPlugin from '../../../../main';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
-import { CleanEmptyFolders } from './cleanEmptyFolders';
+import { CleanEmptyFolders } from '../../maintenance/cleanEmptyFolders';
+import { PathSettings } from '../../maintenance/settings/pathSettings';
 
 export class DeleteLink {
     private app: App;
@@ -87,7 +88,6 @@ export class DeleteLink {
         if (type === 'attachment') {
             match = text.match(/!\[\[(.*?)(?:\|.*?)?\]\]/);
             if (match) {
-                // 첨부파일은 현재 노트와 같은 경로에 있음
                 const currentDir = currentPath.substring(0, currentPath.lastIndexOf('/'));
                 return `${currentDir}/${match[1]}`;
             }
@@ -95,7 +95,9 @@ export class DeleteLink {
             match = text.match(/\[\[(.*?)(?:\|.*?)?\]\]/);
             if (match) {
                 // 노트 경로가 이미 완전한 경로인 경우
-                return match[1].endsWith('.md') ? match[1] : `${match[1]}.md`;
+                return match[1].endsWith(PathSettings.DEFAULT_FILE_EXTENSION) 
+                    ? match[1] 
+                    : `${match[1]}${PathSettings.DEFAULT_FILE_EXTENSION}`;
             }
         }
         return null;

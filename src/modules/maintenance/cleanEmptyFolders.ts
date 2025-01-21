@@ -1,10 +1,11 @@
 import { App, Notice, TFolder } from 'obsidian';
-import type AILSSPlugin from '../../../../main';
+import type AILSSPlugin from '../../../main';
+import { PathSettings } from './settings/pathSettings';
 
 export class CleanEmptyFolders {
-    private static readonly DEACTIVATED_ROOT = 'deactivated';
+    private static readonly DEACTIVATED_ROOT = PathSettings.DEACTIVATED_ROOT;
     private app: App;
-    private readonly MAX_DEPTH = 7;
+    private readonly MAX_DEPTH = PathSettings.MAX_FOLDER_DEPTH;
 
     constructor(app: App, plugin: AILSSPlugin) {
         this.app = app;

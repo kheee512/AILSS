@@ -1,7 +1,8 @@
 import { App, Notice } from 'obsidian';
 import { moment } from 'obsidian';
 import type AILSSPlugin from 'main';
-import { FrontmatterManager } from '../../maintenance/frontmatterManager';
+import { FrontmatterManager } from '../../maintenance/settings/frontmatterManager';
+import { PathSettings } from '../../maintenance/settings/pathSettings';
 
 export class NewNote {
     constructor(
@@ -13,7 +14,7 @@ export class NewNote {
         const now = moment();
         
         // 폴더 경로 생성 (YY/MM/DD/HH/)
-        const folderPath = now.format('YY/MM/DD/HH');
+        const folderPath = PathSettings.getTimestampedPath(now);
 
         const frontmatterManager = new FrontmatterManager();
         const noteContent = frontmatterManager.generateFrontmatter({}, false);
@@ -25,11 +26,11 @@ export class NewNote {
             }
             
             // 사용 가능한 파일명 찾기
-            let fileName = 'untitled.md';
+            let fileName = PathSettings.getDefaultFileName();
             let counter = 1;
             
             while (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
-                fileName = `untitled-${counter}.md`;
+                fileName = PathSettings.getDefaultFileName(counter);
                 counter++;
             }
             

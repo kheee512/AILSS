@@ -1,6 +1,6 @@
 import { App, Notice, MarkdownView, moment } from 'obsidian';
 import type AILSSPlugin from 'main';
-import { FrontmatterManager } from '../../maintenance/frontmatterManager';
+import { FrontmatterManager } from '../../maintenance/settings/frontmatterManager';
 
 export class LinkNote {
     constructor(
@@ -70,7 +70,7 @@ export class LinkNote {
                 `${folderPath}/${fileName}`,
                 noteContent
             );
-            
+
             // 선택된 텍스트를 링크로 변경
             editor.replaceSelection(`[[${folderPath}/${fileName.replace('.md', '')}|${selectedText}]]`);
 

@@ -1,11 +1,12 @@
 import { App, Notice, TFile, TFolder } from 'obsidian';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
 import { showTagSelectionDialog } from '../../../components/tagSelectionModal';
-import { CleanEmptyFolders } from '../delete/cleanEmptyFolders';
+import { CleanEmptyFolders } from '../../maintenance/cleanEmptyFolders';
 import type AILSSPlugin from '../../../../main';
+import { PathSettings } from '../../maintenance/settings/pathSettings';
 
 export class ActivateNotes {
-    private static readonly DEACTIVATED_ROOT = 'deactivated';
+    private static readonly DEACTIVATED_ROOT = PathSettings.DEACTIVATED_ROOT;
     
     private app: App;
     private plugin: AILSSPlugin;

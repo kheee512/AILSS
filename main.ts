@@ -3,7 +3,7 @@ import { NewNote } from './src/modules/command/create/newNote';
 import { LinkNote } from './src/modules/command/create/linkNote';
 import { UpdateTags } from './src/modules/command/update/updateTags';
 //import { AILSSSettingTab } from './src/modules/settings/settingTab';
-import { RenameAttachments } from './src/modules/command/update/renameAttachments';
+import { RenameAttachments } from './src/modules/maintenance/renameAttachments';
 import { Potentiate } from './src/modules/command/update/potentiate';
 import { DeleteLink } from './src/modules/command/delete/deleteLink';
 import { DeleteCurrentNote } from './src/modules/command/delete/deleteCurrentNote';

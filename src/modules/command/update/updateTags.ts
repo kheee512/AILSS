@@ -1,7 +1,7 @@
 import { App, Notice, TFile } from 'obsidian';
 import AILSSPlugin from '../../../../main';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
-import { FrontmatterManager } from '../../../modules/maintenance/frontmatterManager';
+import { FrontmatterManager } from '../../maintenance/settings/frontmatterManager';
 
 export class UpdateTags {
     private app: App;
