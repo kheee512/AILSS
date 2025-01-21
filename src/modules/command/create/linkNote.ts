@@ -23,26 +23,33 @@ export class LinkNote {
                 throw new Error("선택된 텍스트가 없습니다.");
             }
 
-            const now = moment();
-            const folderPath = now.format('YY/MM/DD/HH');
-
             const activeFile = this.app.workspace.getActiveFile();
             if (!activeFile) {
                 throw new Error("현재 열린 파일을 찾을 수 없습니다.");
             }
 
             // 현재 노트의 frontmatter에서 태그 가져오기
-            const frontmatter = this.app.metadataCache.getFileCache(activeFile)?.frontmatter;
-            const currentTags = frontmatter?.tags || [];
-            const defaultTags = this.plugin.settings.defaultTags;
-            const tags = Array.from(new Set([
-                ...defaultTags,
-                ...(Array.isArray(currentTags) ? currentTags : [currentTags])
-            ]));
+            const frontmatterManager = new FrontmatterManager();
+            const currentContent = await this.app.vault.read(activeFile);
+            const currentFrontmatter = frontmatterManager.parseFrontmatter(currentContent);
+            const currentTags = currentFrontmatter?.tags || [];
 
-            // FrontmatterManager를 사용하여 프론트매터 생성
-            const frontmatterManager = new FrontmatterManager(this.plugin);
-            const noteContent = frontmatterManager.generateFrontmatter({ tags });
+            // 기본 태그만 있는지 확인
+            if (FrontmatterManager.hasOnlyDefaultTags(currentTags)) {
+                new Notice("현재 노트에 기본 태그 외의 태그가 없습니다. 태그를 추가해주세요.");
+                return;
+            }
+
+            // 기본 태그를 제외한 태그만 가져오기
+            const nonDefaultTags = FrontmatterManager.getNonDefaultTags(currentTags);
+
+            const now = moment();
+            const folderPath = now.format('YY/MM/DD/HH');
+
+            // 프론트매터 생성 (상속받은 태그 포함)
+            const noteContent = frontmatterManager.generateFrontmatter({
+                tags: [...FrontmatterManager.DEFAULT_TAGS, ...nonDefaultTags]
+            });
 
             // 폴더 생성
             if (!(await this.app.vault.adapter.exists(folderPath))) {

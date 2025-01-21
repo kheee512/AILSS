@@ -5,6 +5,8 @@ import { CleanEmptyFolders } from '../delete/cleanEmptyFolders';
 import type AILSSPlugin from '../../../../main';
 
 export class DeactivateNotes {
+    private static readonly DEACTIVATED_ROOT = 'deactivated';
+    
     private app: App;
     private plugin: AILSSPlugin;
 
@@ -62,13 +64,19 @@ export class DeactivateNotes {
         }
     }
 
+    private async ensureDeactivatedFolder(): Promise<void> {
+        if (!(await this.app.vault.adapter.exists(DeactivateNotes.DEACTIVATED_ROOT))) {
+            await this.app.vault.createFolder(DeactivateNotes.DEACTIVATED_ROOT);
+        }
+    }
+
     private async moveNoteToDeactivateFolder(note: TFile, tags: string[]): Promise<void> {
         const now = new Date();
         const mainTag = tags[0].replace(/^#/, '').replace(/\//g, '-');
         const year = String(now.getFullYear()).slice(-2);
-        const deactivatePath = `${mainTag}/${year}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}/${String(now.getHours()).padStart(2, '0')}`;
+        const deactivatePath = `${DeactivateNotes.DEACTIVATED_ROOT}/${mainTag}/${year}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}/${String(now.getHours()).padStart(2, '0')}`;
         
-        // 대상 폴더 생성
+        await this.ensureDeactivatedFolder();
         await this.createFolderIfNotExists(deactivatePath);
 
         // 노트 내용 읽기

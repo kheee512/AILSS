@@ -5,6 +5,8 @@ import { CleanEmptyFolders } from '../delete/cleanEmptyFolders';
 import type AILSSPlugin from '../../../../main';
 
 export class ActivateNotes {
+    private static readonly DEACTIVATED_ROOT = 'deactivated';
+    
     private app: App;
     private plugin: AILSSPlugin;
     private cleanEmptyFolders: CleanEmptyFolders;
@@ -17,26 +19,32 @@ export class ActivateNotes {
 
     async activateNotes(): Promise<void> {
         try {
-            // 태그 입력 받기
+            if (!(await this.app.vault.adapter.exists(ActivateNotes.DEACTIVATED_ROOT))) {
+                new Notice("비활성화된 노트 폴더가 존재하지 않습니다.");
+                return;
+            }
+
+            // 태그 입력 받기 (실제로는 폴더명 입력)
             const tags = await showTagSelectionDialog(this.app, {
-                title: "활성화할 노트의 태그 입력",
-                placeholder: "태그를 입력하세요",
-                confirmText: "활성화",
+                title: "활성화할 폴더명 입력",
+                placeholder: "비활성화된 노트들이 있는 폴더명을 입력하세요",
+                confirmText: "검색",
                 cancelText: "취소"
             });
 
             if (!tags || tags.length === 0) {
-                new Notice("태그가 입력되지 않았습니다.");
+                new Notice("폴더명이 입력되지 않았습니다.");
                 return;
             }
 
             // 태그를 폴더명 형식으로 변환
             const folderName = tags[0].replace(/^#/, '').replace(/\//g, '-');
+            const fullPath = `${ActivateNotes.DEACTIVATED_ROOT}/${folderName}`;
             
             // 해당 폴더 찾기
-            const folder = this.app.vault.getAbstractFileByPath(folderName);
+            const folder = this.app.vault.getAbstractFileByPath(fullPath);
             if (!(folder instanceof TFolder)) {
-                new Notice(`'${folderName}' 폴더를 찾을 수 없습니다.`);
+                new Notice(`'${fullPath}' 폴더를 찾을 수 없습니다. 정확한 폴더명을 입력해주세요.`);
                 return;
             }
 
@@ -48,8 +56,8 @@ export class ActivateNotes {
             }
 
             const confirmed = await showConfirmationDialog(this.app, {
-                title: "활성화 확인",
-                message: `${deactivatedNotes.length}개의 노트를 활성화하시겠습니까?`,
+                title: "노트 활성화 확인",
+                message: `'${fullPath}' 폴더에서 발견된 ${deactivatedNotes.length}개의 노트를 활성화하시겠습니까?`,
                 confirmText: "활성화",
                 cancelText: "취소"
             });
@@ -101,7 +109,7 @@ export class ActivateNotes {
 
     private async moveNoteToActiveFolder(note: TFile): Promise<void> {
         const pathParts = note.path.split('/');
-        const [, year, month, day, hour] = pathParts;
+        const [, , year, month, day, hour] = pathParts;
         const activePath = `${year}/${month}/${day}/${hour}`;
         
         // 대상 폴더 생성

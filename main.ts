@@ -38,9 +38,9 @@ export default class AILSSPlugin extends Plugin {
 		this.potentiateManager = new Potentiate(this.app, this);
 		this.deleteLinkManager = new DeleteLink(this.app, this);
 		this.deleteCurrentNoteManager = new DeleteCurrentNote(this.app, this);
-		this.cleanEmptyFoldersManager = new CleanEmptyFolders(this.app);
-		this.deactivateNotesManager = new DeactivateNotes(this.app);
-		this.activateNotesManager = new ActivateNotes(this.app);
+		this.cleanEmptyFoldersManager = new CleanEmptyFolders(this.app, this);
+		this.deactivateNotesManager = new DeactivateNotes(this.app, this);
+		this.activateNotesManager = new ActivateNotes(this.app, this);
 
 		// 리본 메뉴에 새 노트 생성 아이콘 추가
 		this.addRibbonIcon('file-plus', '새 노트 생성', () => {

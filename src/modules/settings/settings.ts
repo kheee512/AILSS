@@ -7,18 +7,10 @@ export interface FrontmatterField {
 
 export interface AILSSSettings {
     openInNewTab: boolean;
-    defaultTags: string[];
-    potentiateDelay: number;
-    potentiateValue: number;
-    maxPotentiation: number;
     showCleanFoldersConfirm: boolean;
 }
 
 export const DEFAULT_SETTINGS: AILSSSettings = {
     openInNewTab: true,
-    defaultTags: ['Initial'],
-    potentiateDelay: 1440,
-    potentiateValue: 1,
-    maxPotentiation: 10,
     showCleanFoldersConfirm: true,
 }

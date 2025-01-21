@@ -1,24 +1,39 @@
 import { moment } from 'obsidian';
 import type AILSSPlugin from 'main';
 
+interface DefaultFrontmatterConfig {
+    Created: string;
+    Activated?: string;
+    Potentiation: number;
+    tags: string[];
+}
+
 export class FrontmatterManager {
-    constructor(private plugin: AILSSPlugin) {}
+    public static readonly DEFAULT_TAGS = ['Initial'];
+    private static readonly INITIAL_POTENTIATION = 0;
+    private static readonly MAX_POTENTIATION = 10;
+    private static readonly POTENTIATION_INCREMENT = 1;
+    private static readonly POTENTIATION_DELAY_MINUTES = 60;
 
-    generateFrontmatter(additionalFields: Record<string, any> = {}): string {
-        const now = moment();
-        
-        // 기본 프론트매터 필드 정의
-        const defaultFields = {
-            ID: now.format('YYMMDDHHmmss'),
-            Potentiation: 0,
-            Activated: now.format('YYYY-MM-DDTHH:mm:ss'),
-            tags: this.plugin.settings.defaultTags
+    constructor() {}
+
+    private getDefaultFrontmatter(now: moment.Moment): DefaultFrontmatterConfig {
+        return {
+            Created: now.format('YYYY-MM-DDTHH:mm:ss'),
+            Potentiation: FrontmatterManager.INITIAL_POTENTIATION,
+            tags: [...FrontmatterManager.DEFAULT_TAGS]
         };
+    }
 
-        // 추가 필드들과 병합
+    // 프론트매터 생성 메서드
+    generateFrontmatter(additionalFields: Record<string, any> = {}, isLinkNote: boolean = false): string {
+        const now = moment();
+        const defaultFields = isLinkNote 
+            ? this.getDefaultFrontmatter(now)
+            : this.getDefaultFrontmatter(now);
+
         const mergedFields = { ...defaultFields, ...additionalFields };
 
-        // YAML 형식으로 변환
         let yaml = '---\n';
         Object.entries(mergedFields).forEach(([key, value]) => {
             if (Array.isArray(value)) {
@@ -30,6 +45,19 @@ export class FrontmatterManager {
         yaml += '---\n';
 
         return yaml;
+    }
+
+    // Potentiation 관련 유틸리티 메서드들
+    static isPotentiationMaxed(currentPotentiation: number): boolean {
+        return currentPotentiation >= this.MAX_POTENTIATION;
+    }
+
+    static getPotentiationIncrement(): number {
+        return this.POTENTIATION_INCREMENT;
+    }
+
+    static getPotentiationDelay(): number {
+        return this.POTENTIATION_DELAY_MINUTES;
     }
 
     parseFrontmatter(content: string): Record<string, any> | null {
@@ -88,5 +116,15 @@ export class FrontmatterManager {
         const newFrontmatter = this.generateFrontmatter(updatedFrontmatter);
 
         return content.replace(frontMatterRegex, newFrontmatter);
+    }
+
+    // 태그가 기본 태그만 있는지 확인하는 메서드
+    static hasOnlyDefaultTags(tags: string[]): boolean {
+        return tags.every(tag => this.DEFAULT_TAGS.includes(tag));
+    }
+
+    // 기본 태그를 제외한 태그들을 반환하는 메서드
+    static getNonDefaultTags(tags: string[]): string[] {
+        return tags.filter(tag => !this.DEFAULT_TAGS.includes(tag));
     }
 } 

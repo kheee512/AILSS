@@ -1,6 +1,7 @@
 import { App, Notice, TFile } from 'obsidian';
 import AILSSPlugin from '../../../../main';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
+import { FrontmatterManager } from '../../../modules/maintenance/frontmatterManager';
 
 export class UpdateTags {
     private app: App;
@@ -92,27 +93,31 @@ export class UpdateTags {
 
     private async updateNoteTags(file: TFile, newTags: string[]): Promise<void> {
         const content = await this.app.vault.read(file);
-        const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+        const frontmatterManager = new FrontmatterManager();
+        const frontmatter = frontmatterManager.parseFrontmatter(content);
         
-        if (!frontmatterMatch) return;
+        if (!frontmatter) return;
 
-        const frontmatter = this.parseFrontmatter(frontmatterMatch[1]);
-        
-        // 기존 노트의 기본 태그는 유지하고, 새로운 태그에서 기본 태그를 제외
-        const existingDefaultTags = (frontmatter.tags || []).filter((tag: string) => 
-            this.plugin.settings.defaultTags.includes(tag)
-        );
-        const nonDefaultNewTags = newTags.filter(tag => 
-            !this.plugin.settings.defaultTags.includes(tag)
-        );
+        // 기본 태그는 유지하고, 새로운 태그에서 기본 태그를 제외한 태그만 추가
+        const nonDefaultNewTags = FrontmatterManager.getNonDefaultTags(newTags);
         
         // 기본 태그와 새로운 태그 합치기
-        frontmatter.tags = [...existingDefaultTags, ...nonDefaultNewTags];
+        frontmatter.tags = [...FrontmatterManager.DEFAULT_TAGS, ...nonDefaultNewTags];
 
-        const newFrontmatter = this.generateFrontmatter(frontmatter);
-        const newContent = content.replace(/^---\n[\s\S]*?\n---/, newFrontmatter);
+        const updatedContent = frontmatterManager.updateFrontmatter(content, {
+            tags: frontmatter.tags
+        });
 
-        await this.app.vault.modify(file, newContent);
+        await this.app.vault.modify(file, updatedContent);
+
+        // 연결된 노트들에 대해 재귀적으로 태그 업데이트
+        const links = this.app.metadataCache.resolvedLinks[file.path] || {};
+        for (const linkedPath of Object.keys(links)) {
+            const linkedFile = this.app.vault.getAbstractFileByPath(linkedPath);
+            if (linkedFile instanceof TFile && linkedFile.path !== file.path) {
+                await this.updateNoteTags(linkedFile, frontmatter.tags);
+            }
+        }
     }
 
     private generateFrontmatter(frontmatter: { [key: string]: any }): string {

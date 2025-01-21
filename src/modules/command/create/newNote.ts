@@ -14,15 +14,9 @@ export class NewNote {
         
         // 폴더 경로 생성 (YY/MM/DD/HH/)
         const folderPath = now.format('YY/MM/DD/HH');
-        
-        // ISO 형식의 현재 시각
-        const activatedTime = now.format('YYYY-MM-DDTHH:mm:ss');
 
-        // 기본 태그 가져오기
-        const defaultTags = this.plugin.settings.defaultTags;
-
-        const frontmatterManager = new FrontmatterManager(this.plugin);
-        const noteContent = frontmatterManager.generateFrontmatter();
+        const frontmatterManager = new FrontmatterManager();
+        const noteContent = frontmatterManager.generateFrontmatter({}, false);
 
         try {
             // 폴더가 존재하지 않을 때만 생성

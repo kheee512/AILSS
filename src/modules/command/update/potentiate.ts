@@ -11,7 +11,7 @@ export class Potentiate {
     constructor(app: App, plugin: AILSSPlugin) {
         this.app = app;
         this.plugin = plugin;
-        this.frontmatterManager = new FrontmatterManager(this.plugin);
+        this.frontmatterManager = new FrontmatterManager();
     }
 
     async potentiateNote() {
@@ -33,7 +33,7 @@ export class Potentiate {
         const lastActivated = frontmatter.Activated ? new Date(frontmatter.Activated) : null;
 
         // 최대 강화 지수 체크
-        if (currentPotentiation >= this.plugin.settings.maxPotentiation) {
+        if (FrontmatterManager.isPotentiationMaxed(currentPotentiation)) {
             new Notice('이미 최대 강화 지수에 도달했습니다.');
             return;
         }
@@ -41,8 +41,8 @@ export class Potentiate {
         // 대기 시간 체크
         if (lastActivated) {
             const minutesSinceLastActivation = (new Date().getTime() - lastActivated.getTime()) / (1000 * 60);
-            if (minutesSinceLastActivation < this.plugin.settings.potentiateDelay) {
-                new Notice(`강화까지 ${Math.ceil(this.plugin.settings.potentiateDelay - minutesSinceLastActivation)}분 남았습니다.`);
+            if (minutesSinceLastActivation < FrontmatterManager.getPotentiationDelay()) {
+                new Notice(`강화까지 ${Math.ceil(FrontmatterManager.getPotentiationDelay() - minutesSinceLastActivation)}분 남았습니다.`);
                 return;
             }
         }
@@ -50,7 +50,7 @@ export class Potentiate {
         // 사용자 확인 추가
         const confirmed = await showConfirmationDialog(this.app, {
             title: "노트 강화 확인",
-            message: `현재 노트의 강화 지수를 ${currentPotentiation} → ${currentPotentiation + this.plugin.settings.potentiateValue}로 증가시키시겠습니까?`,
+            message: `현재 노트의 강화 지수를 ${currentPotentiation} → ${currentPotentiation + FrontmatterManager.getPotentiationIncrement()}로 증가시키시겠습니까?`,
             confirmText: "강화",
             cancelText: "취소"
         });
@@ -61,7 +61,7 @@ export class Potentiate {
         }
 
         // 강화 수행
-        const newPotentiation = currentPotentiation + this.plugin.settings.potentiateValue;
+        const newPotentiation = currentPotentiation + FrontmatterManager.getPotentiationIncrement();
         const now = new Date();
         const formattedDate = now.toISOString().replace(/\.\d{3}Z$/, '');
 
