@@ -1,7 +1,7 @@
 import { App, Notice, TFile, Modal } from 'obsidian';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
 import { showTagSelectionDialog } from '../../../components/tagSelectionModal';
-import { CleanEmptyFolders } from '../../maintenance/cleanEmptyFolders';
+import { CleanEmptyFolders } from '../../maintenance/utils/cleanEmptyFolders';
 import type AILSSPlugin from '../../../../main';
 import { PathSettings } from '../../maintenance/settings/pathSettings';
 import { moment } from 'obsidian';

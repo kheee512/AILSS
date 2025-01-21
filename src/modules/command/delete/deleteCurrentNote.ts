@@ -1,7 +1,7 @@
 import { App, Notice, TFile } from 'obsidian';
 import type AILSSPlugin from '../../../../main';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
-import { CleanEmptyFolders } from '../../maintenance/cleanEmptyFolders';
+import { CleanEmptyFolders } from '../../maintenance/utils/cleanEmptyFolders';
 
 export class DeleteCurrentNote {
     private app: App;

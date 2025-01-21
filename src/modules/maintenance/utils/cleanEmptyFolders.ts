@@ -1,6 +1,6 @@
 import { App, Notice, TFolder } from 'obsidian';
-import type AILSSPlugin from '../../../main';
-import { PathSettings } from './settings/pathSettings';
+import type AILSSPlugin from '../../../../main';
+import { PathSettings } from '../settings/pathSettings';
 
 export class CleanEmptyFolders {
     private static readonly DEACTIVATED_ROOT = PathSettings.DEACTIVATED_ROOT;
