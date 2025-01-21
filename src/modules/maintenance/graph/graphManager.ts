@@ -23,18 +23,27 @@ export class GraphManager {
             const view = leaf.view as any;
             if (!view) return;
 
-            // 기존의 설정 적용 로직
+            // 그래프 설정만 적용하고 다른 설정은 유지
+            const graphSettings = {
+                ...view.options,  // 기존 설정 유지
+                ...DEFAULT_GRAPH_CONFIG  // 그래프 관련 설정만 덮어쓰기
+            };
+
+            // 기존 설정 적용 로직 수정
             if (view.options) {
-                Object.assign(view.options, DEFAULT_GRAPH_CONFIG);
+                Object.assign(view.options, graphSettings);
             }
             if (view.renderer?.settings) {
-                Object.assign(view.renderer.settings, DEFAULT_GRAPH_CONFIG);
+                Object.assign(view.renderer.settings, graphSettings);
             }
 
-            // 뷰 상태 업데이트
+            // 뷰 상태 업데이트 시에도 기존 설정 유지
             const viewState = leaf.getViewState();
             if (!viewState.state) viewState.state = {};
-            viewState.state.options = DEFAULT_GRAPH_CONFIG;
+            viewState.state.options = {
+                ...(typeof viewState.state.options === 'object' ? viewState.state.options : {}),
+                ...graphSettings
+            };
             leaf.setViewState(viewState);
 
             // 렌더러 리셋 및 새로고침
