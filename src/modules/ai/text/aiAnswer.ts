@@ -1,7 +1,7 @@
 import { App, Notice, Editor, MarkdownView } from 'obsidian';
 import AILSSPlugin from '../../../../main';
-import { requestToAI } from '../../../modules/maintenance/utils/aiUtils';
-import { getContentWithoutFrontmatter } from '../../../modules/maintenance/utils/contentUtils';
+import { requestToAI } from '../../maintenance/utils/aiUtils';
+import { getContentWithoutFrontmatter } from '../../maintenance/utils/contentUtils';
 
 export class AIAnswer {
     private app: App;

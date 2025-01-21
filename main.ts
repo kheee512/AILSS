@@ -10,6 +10,14 @@ import { DeactivateNotes } from './src/modules/command/move/deactivateNotes';
 import { ActivateNotes } from './src/modules/command/move/activateNotes';
 import { GraphManager } from './src/modules/maintenance/graph/graphManager';
 import { AILSSSettings, DEFAULT_SETTINGS, AILSSSettingTab } from './src/modules/maintenance/settings/settings';
+import { AIImageAnalysis } from './src/modules/ai/image/aiOCR';
+import { AIImageInspect } from './src/modules/ai/image/aiImageAnalysis';
+import { AIExamAnalysis } from './src/modules/ai/image/aiExamAnalysis';
+import { AIAnswer } from './src/modules/ai/text/aiAnswer';
+import { AILinkNote } from './src/modules/ai/text/aiLinkNote';
+import { AILatexMath } from './src/modules/ai/text/aiLatexMath';
+import { AIVisualizer } from './src/modules/ai/text/aiVisualizer';
+import { FileCountManager } from './src/modules/maintenance/utils/fileCountManager';
 
 
 
@@ -28,6 +36,14 @@ export default class AILSSPlugin extends Plugin {
 	private pendingRename: boolean = false;
 	private renameTimeout: NodeJS.Timeout | null = null;
 	private graphManager: GraphManager;
+	private aiImageAnalysis: AIImageAnalysis;
+	private aiImageInspect: AIImageInspect;
+	private aiExamAnalysis: AIExamAnalysis;
+	private aiAnswer: AIAnswer;
+	private aiLinkNote: AILinkNote;
+	private aiLatexMath: AILatexMath;
+	private aiVisualizer: AIVisualizer;
+	private fileCountManager: FileCountManager;
 
 	async onload() {
 		await this.loadSettings();
@@ -40,12 +56,24 @@ export default class AILSSPlugin extends Plugin {
 		this.potentiateManager = new Potentiate(this.app, this);
 		this.deleteLinkManager = new DeleteLink(this.app, this);
 		this.deleteCurrentNoteManager = new DeleteCurrentNote(this.app, this);
-		//this.cleanEmptyFoldersManager = new CleanEmptyFolders(this.app, this);
+		
 		this.deactivateNotesManager = new DeactivateNotes(this.app, this);
 		this.activateNotesManager = new ActivateNotes(this.app, this);
 
 		// GraphManager 초기화
 		this.graphManager = new GraphManager(this.app, this);
+
+		// AI 모듈 초기화
+		this.aiImageAnalysis = new AIImageAnalysis(this.app, this);
+		this.aiImageInspect = new AIImageInspect(this.app, this);
+		this.aiExamAnalysis = new AIExamAnalysis(this.app, this);
+		this.aiAnswer = new AIAnswer(this.app, this);
+		this.aiLinkNote = new AILinkNote(this.app, this);
+		this.aiLatexMath = new AILatexMath(this.app, this);
+		this.aiVisualizer = new AIVisualizer(this.app, this);
+
+		// FileCountManager 초기화
+		this.fileCountManager = FileCountManager.getInstance(this.app, this);
 
 		// 리본 메뉴에 새 노트 생성 아이콘 추가
 		this.addRibbonIcon('file-plus', '새 노트 생성', () => {
@@ -80,6 +108,35 @@ export default class AILSSPlugin extends Plugin {
 		// 리본 메뉴에 활성화 아이콘 추가
 		this.addRibbonIcon('folder-input', '노트 활성화', () => {
 			this.activateNotesManager.activateNotes();
+		});
+
+		// AI 리본 메뉴 추가
+		this.addRibbonIcon('file-scan', 'OCR 분석', () => {
+			this.aiImageAnalysis.main();
+		});
+
+		this.addRibbonIcon('image', '이미지 분석', () => {
+			this.aiImageInspect.main();
+		});
+
+		this.addRibbonIcon('book-open', '문제 분석', () => {
+			this.aiExamAnalysis.main();
+		});
+
+		this.addRibbonIcon('message-circle-question', 'AI 답변', () => {
+			this.aiAnswer.main();
+		});
+
+		this.addRibbonIcon('link-2', 'AI 링크 노트', () => {
+			this.aiLinkNote.createAILinkNote();
+		});
+
+		this.addRibbonIcon('sigma', 'LaTeX 변환', () => {
+			this.aiLatexMath.main();
+		});
+
+		this.addRibbonIcon('bar-chart', '다이어그램 생성', () => {
+			this.aiVisualizer.main();
 		});
 
 		// 새 노트 생성 명령어 추가
@@ -138,6 +195,49 @@ export default class AILSSPlugin extends Plugin {
 			id: 'activate-notes',
 			name: '노트 활성화',
 			callback: () => this.activateNotesManager.activateNotes()
+		});
+
+		// AI 명령어 추가
+		this.addCommand({
+			id: 'ai-ocr-analysis',
+			name: 'OCR 분석',
+			editorCallback: () => this.aiImageAnalysis.main()
+		});
+
+		this.addCommand({
+			id: 'ai-image-analysis',
+			name: '이미지 분석',
+			editorCallback: () => this.aiImageInspect.main()
+		});
+
+		this.addCommand({
+			id: 'ai-exam-analysis',
+			name: '문제 분석',
+			editorCallback: () => this.aiExamAnalysis.main()
+		});
+
+		this.addCommand({
+			id: 'ai-answer',
+			name: 'AI 답변',
+			editorCallback: () => this.aiAnswer.main()
+		});
+
+		this.addCommand({
+			id: 'ai-link-note',
+			name: 'AI 링크 노트',
+			editorCallback: () => this.aiLinkNote.createAILinkNote()
+		});
+
+		this.addCommand({
+			id: 'ai-latex-math',
+			name: 'LaTeX 변환',
+			editorCallback: () => this.aiLatexMath.main()
+		});
+
+		this.addCommand({
+			id: 'ai-visualizer',
+			name: '다이어그램 생성',
+			editorCallback: () => this.aiVisualizer.main()
 		});
 
 		// 파일 생성 이벤트 리스너 추가

@@ -1,7 +1,7 @@
 import { App, Notice } from 'obsidian';
 import { moment } from 'obsidian';
 import type AILSSPlugin from 'main';
-import { FrontmatterManager } from '../../maintenance/settings/frontmatterManager';
+import { FrontmatterManager } from '../../maintenance/utils/frontmatterManager';
 import { PathSettings } from '../../maintenance/settings/pathSettings';
 
 export class NewNote {
@@ -11,6 +11,12 @@ export class NewNote {
     ) {}
 
     async createNewNote() {
+        // 노트 개수 제한 확인
+        if (!(await PathSettings.checkNoteLimit(this.app, this.plugin))) {
+            new Notice(`노트 개수가 최대 제한(${PathSettings.MAX_NOTES}개)에 도달했습니다.`);
+            return;
+        }
+
         const now = moment();
         
         // 폴더 경로 생성 (YY/MM/DD/HH/)

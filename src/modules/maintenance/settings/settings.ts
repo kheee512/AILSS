@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import AILSSPlugin from '../../../../main';
+import { FileCountManager } from '../utils/fileCountManager';
 
 export interface AILSSSettings {
     openAIAPIKey: string;
@@ -32,9 +33,40 @@ export class AILSSSettingTab extends PluginSettingTab {
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
-        containerEl.createEl('h2', { text: 'AI 설정' });
+        containerEl.createEl('h1', { text: 'AILSS' });
 
-        this.addAISettings(containerEl);
+        // 통계 섹션
+        containerEl.createEl('h2', { text: '통계' });
+        const statisticsContainer = containerEl.createDiv('statistics-section');
+        this.addStatistics(statisticsContainer);
+
+        // AI 설정 섹션
+        containerEl.createEl('h2', { text: 'AI 모델 설정' });
+        const aiSettingsContainer = containerEl.createDiv('ai-settings-section');
+        this.addAISettings(aiSettingsContainer);
+    }
+
+    private async addStatistics(containerEl: HTMLElement) {
+        const fileCountManager = FileCountManager.getInstance(this.app, this.plugin);
+        const noteCount = await fileCountManager.getNoteCount();
+        const attachmentCount = await fileCountManager.getAttachmentCount();
+        
+        // 통계 정보 표시
+        new Setting(containerEl)
+            .setName('전체 노트 수')
+            .setDesc('노트 개수는 최대 1000개로 제한됩니다.')
+            .addText(text => text
+                .setValue(String(noteCount))
+                .setDisabled(true));
+
+        new Setting(containerEl)
+            .setName('전체 첨부파일 수')
+            .setDesc('날짜별 경로에 저장된 총 첨부파일 개수')
+            .addText(text => text
+                .setValue(String(attachmentCount))
+                .setDisabled(true));
+
+        containerEl.createEl('hr');
     }
 
     private addAISettings(containerEl: HTMLElement) {
