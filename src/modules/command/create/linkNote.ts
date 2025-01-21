@@ -70,13 +70,7 @@ export class LinkNote {
                 `${folderPath}/${fileName}`,
                 noteContent
             );
-
-            // 설정에 따라 새 탭에서 파일 열기
-            if (this.plugin.settings.openInNewTab) {
-                const leaf = this.app.workspace.getLeaf('tab');
-                await leaf.openFile(newFile);
-            }
-
+            
             // 선택된 텍스트를 링크로 변경
             editor.replaceSelection(`[[${folderPath}/${fileName.replace('.md', '')}|${selectedText}]]`);
 

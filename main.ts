@@ -2,7 +2,7 @@ import { App, Editor, MarkdownView, Modal, Notice, Plugin } from 'obsidian';
 import { NewNote } from './src/modules/command/create/newNote';
 import { LinkNote } from './src/modules/command/create/linkNote';
 import { UpdateTags } from './src/modules/command/update/updateTags';
-import { AILSSSettingTab } from './src/modules/settings/settingTab';
+//import { AILSSSettingTab } from './src/modules/settings/settingTab';
 import { RenameAttachments } from './src/modules/command/update/renameAttachments';
 import { Potentiate } from './src/modules/command/update/potentiate';
 import { DeleteLink } from './src/modules/command/delete/deleteLink';
@@ -11,12 +11,12 @@ import { CleanEmptyFolders } from './src/modules/command/delete/cleanEmptyFolder
 import { DeactivateNotes } from './src/modules/command/move/deactivateNotes';
 import { ActivateNotes } from './src/modules/command/move/activateNotes';
 
-import { AILSSSettings, DEFAULT_SETTINGS } from './src/modules/settings/settings';
+//import { AILSSSettings, DEFAULT_SETTINGS } from './src/modules/settings/settings';
 
 // Remember to rename these classes and interfaces!
 
 export default class AILSSPlugin extends Plugin {
-	settings: AILSSSettings;
+	//settings: AILSSSettings;
 	private newNoteManager: NewNote;
 	private linkNoteManager: LinkNote;
 	private updateTagsManager: UpdateTags;
@@ -24,12 +24,12 @@ export default class AILSSPlugin extends Plugin {
 	private potentiateManager: Potentiate;
 	private deleteLinkManager: DeleteLink;
 	private deleteCurrentNoteManager: DeleteCurrentNote;
-	private cleanEmptyFoldersManager: CleanEmptyFolders;
+	//private cleanEmptyFoldersManager: CleanEmptyFolders;
 	private deactivateNotesManager: DeactivateNotes;
 	private activateNotesManager: ActivateNotes;
 
 	async onload() {
-		await this.loadSettings();
+		//await this.loadSettings();
 		
 		this.newNoteManager = new NewNote(this.app, this);
 		this.linkNoteManager = new LinkNote(this.app, this);
@@ -38,7 +38,7 @@ export default class AILSSPlugin extends Plugin {
 		this.potentiateManager = new Potentiate(this.app, this);
 		this.deleteLinkManager = new DeleteLink(this.app, this);
 		this.deleteCurrentNoteManager = new DeleteCurrentNote(this.app, this);
-		this.cleanEmptyFoldersManager = new CleanEmptyFolders(this.app, this);
+		//this.cleanEmptyFoldersManager = new CleanEmptyFolders(this.app, this);
 		this.deactivateNotesManager = new DeactivateNotes(this.app, this);
 		this.activateNotesManager = new ActivateNotes(this.app, this);
 
@@ -70,11 +70,6 @@ export default class AILSSPlugin extends Plugin {
 		// 리본 메뉴에 노트 삭제 아이콘 추가
 		this.addRibbonIcon('trash', '현재 노트 삭제', () => {
 			this.deleteCurrentNoteManager.deleteNote();
-		});
-
-		// 리본 메뉴에 빈 폴더 정리 아이콘 추가
-		this.addRibbonIcon('trash-2', '빈 폴더 정리', () => {
-			this.cleanEmptyFoldersManager.cleanEmptyFoldersInVault();
 		});
 
 		// 리본 메뉴에 비활성화 아이콘 추가
@@ -138,13 +133,6 @@ export default class AILSSPlugin extends Plugin {
 			callback: () => this.deleteCurrentNoteManager.deleteNote()
 		});
 
-		// 빈 폴더 정리 명령어 추가
-		this.addCommand({
-			id: 'clean-empty-folders',
-			name: '빈 폴더 정리',
-			callback: () => this.cleanEmptyFoldersManager.cleanEmptyFoldersInVault()
-		});
-
 		// 비활성화 명령어 추가
 		this.addCommand({
 			id: 'deactivate-notes-by-tag',
@@ -158,6 +146,17 @@ export default class AILSSPlugin extends Plugin {
 			name: '노트 활성화',
 			callback: () => this.activateNotesManager.activateNotes()
 		});
+
+
+
+
+
+
+
+
+
+
+
 
 		// This adds a complex command that can check whether the current state of the app allows execution of the command
 		this.addCommand({
@@ -177,13 +176,13 @@ export default class AILSSPlugin extends Plugin {
 		});
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new AILSSSettingTab(this.app, this));
+		//this.addSettingTab(new AILSSSettingTab(this.app, this));
 
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
+		//this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
+		//	console.log('click', evt);
+		//});
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
 		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
@@ -193,19 +192,19 @@ export default class AILSSPlugin extends Plugin {
 
 	}
 
-	async loadSettings() {
-		const loadedData = await this.loadData();
-		// 기본 설정값으로 초기화
-		this.settings = {
-			...DEFAULT_SETTINGS,
-			...loadedData
-		};
+	//async loadSettings() {
+	//	const loadedData = await this.loadData();
+	//		기본 설정값으로 초기화
+	//	this.settings = {
+	//		...DEFAULT_SETTINGS,
+	//		...loadedData
+	//	};
 
-		await this.saveSettings();
-	}
+	//	await this.saveSettings();
+	//}
 
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
+	//async saveSettings() {
+	//	await this.saveData(this.settings);
+	//}
 }
 

@@ -3,7 +3,7 @@ import type AILSSPlugin from 'main';
 
 interface DefaultFrontmatterConfig {
     Created: string;
-    Activated?: string;
+    Activated: string;
     Potentiation: number;
     tags: string[];
 }
@@ -11,15 +11,16 @@ interface DefaultFrontmatterConfig {
 export class FrontmatterManager {
     public static readonly DEFAULT_TAGS = ['Initial'];
     private static readonly INITIAL_POTENTIATION = 0;
-    private static readonly MAX_POTENTIATION = 10;
+    private static readonly MAX_POTENTIATION = 100;
     private static readonly POTENTIATION_INCREMENT = 1;
-    private static readonly POTENTIATION_DELAY_MINUTES = 60;
+    private static readonly POTENTIATION_DELAY_MINUTES = 5;
 
     constructor() {}
 
     private getDefaultFrontmatter(now: moment.Moment): DefaultFrontmatterConfig {
         return {
             Created: now.format('YYYY-MM-DDTHH:mm:ss'),
+            Activated: now.format('YYYY-MM-DDTHH:mm:ss'),
             Potentiation: FrontmatterManager.INITIAL_POTENTIATION,
             tags: [...FrontmatterManager.DEFAULT_TAGS]
         };

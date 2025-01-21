@@ -2,6 +2,7 @@ import { App, Notice } from 'obsidian';
 import type AILSSPlugin from '../../../../main';
 import { FrontmatterManager } from '../../maintenance/frontmatterManager';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
+import { moment } from 'obsidian';
 
 export class Potentiate {
     private app: App;
@@ -62,8 +63,8 @@ export class Potentiate {
 
         // 강화 수행
         const newPotentiation = currentPotentiation + FrontmatterManager.getPotentiationIncrement();
-        const now = new Date();
-        const formattedDate = now.toISOString().replace(/\.\d{3}Z$/, '');
+        const now = moment();
+        const formattedDate = now.format('YYYY-MM-DDTHH:mm:ss');
 
         const updatedContent = this.frontmatterManager.updateFrontmatter(fileContent, {
             Potentiation: newPotentiation,

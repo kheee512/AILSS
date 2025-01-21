@@ -39,12 +39,10 @@ export class NewNote {
                 noteContent
             );
 
-            // 설정에 따라 새 탭에서 파일 열기
-            if (this.plugin.settings.openInNewTab) {
-                const leaf = this.app.workspace.getLeaf('tab');
-                await leaf.openFile(newFile);
-            }
-
+            // 항상 새 탭에서 파일 열기
+            const leaf = this.app.workspace.getLeaf('tab');
+            await leaf.openFile(newFile);
+            
             new Notice(`새 노트가 생성되었습니다`);
             return newFile;
         } catch (error) {
