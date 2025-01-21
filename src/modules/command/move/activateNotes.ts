@@ -1,5 +1,5 @@
 import { App, Notice, TFile, TFolder } from 'obsidian';
-import { showConfirmationDialog } from '../../components/confirmationModal';
+import { showConfirmationDialog } from '../../../components/confirmationModal';
 
 export class ActivateNotes {
     private app: App;

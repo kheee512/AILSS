@@ -1,5 +1,5 @@
 import { App, Notice, TFile, TFolder, Editor } from 'obsidian';
-import type AILSSPlugin from '../../../main';
+import type AILSSPlugin from '../../../../main';
 
 export class DeleteLink {
     private app: App;

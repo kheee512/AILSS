@@ -1,5 +1,5 @@
 import { App, Notice, TFile } from 'obsidian';
-import AILSSPlugin from '../../../main';
+import AILSSPlugin from '../../../../main';
 
 export class UpdateTags {
     private app: App;

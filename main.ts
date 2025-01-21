@@ -1,15 +1,15 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin } from 'obsidian';
-import { NewNote } from './src/modules/basic/newNote';
-import { LinkNote } from './src/modules/basic/linkNote';
-import { UpdateTags } from './src/modules/basic/updateTags';
+import { NewNote } from './src/modules/command/create/newNote';
+import { LinkNote } from './src/modules/command/create/linkNote';
+import { UpdateTags } from './src/modules/command/update/updateTags';
 import { AILSSSettingTab } from './src/modules/settings/settingTab';
-import { RenameAttachments } from './src/modules/basic/renameAttachments';
-import { Potentiate } from './src/modules/basic/potentiate';
-import { DeleteLink } from './src/modules/basic/deleteLink';
-import { DeleteCurrentNote } from './src/modules/basic/deleteCurrentNote';
-import { CleanEmptyFolders } from './src/modules/basic/cleanEmptyFolders';
-import { DeactivateNotes } from './src/modules/basic/deactivateNotes';
-import { ActivateNotes } from './src/modules/basic/activateNotes';
+import { RenameAttachments } from './src/modules/command/update/renameAttachments';
+import { Potentiate } from './src/modules/command/update/potentiate';
+import { DeleteLink } from './src/modules/command/delete/deleteLink';
+import { DeleteCurrentNote } from './src/modules/command/delete/deleteCurrentNote';
+import { CleanEmptyFolders } from './src/modules/command/delete/cleanEmptyFolders';
+import { DeactivateNotes } from './src/modules/command/move/deactivateNotes';
+import { ActivateNotes } from './src/modules/command/move/activateNotes';
 
 import { AILSSSettings, DEFAULT_SETTINGS } from './src/modules/settings/settings';
 

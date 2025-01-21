@@ -1,5 +1,5 @@
 import { App, Notice, TFolder, TAbstractFile } from 'obsidian';
-import { showConfirmationDialog } from '../../components/confirmationModal';
+import { showConfirmationDialog } from '../../../components/confirmationModal';
 
 export class CleanEmptyFolders {
     private app: App;

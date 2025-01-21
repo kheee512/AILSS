@@ -1,6 +1,7 @@
-import { App, Notice, TFile, MarkdownView } from 'obsidian';
+import { App, Notice } from 'obsidian';
 import { moment } from 'obsidian';
 import type AILSSPlugin from 'main';
+import { FrontmatterManager } from '../../maintenance/frontmatterManager';
 
 export class NewNote {
     constructor(
@@ -20,14 +21,8 @@ export class NewNote {
         // 기본 태그 가져오기
         const defaultTags = this.plugin.settings.defaultTags;
 
-        // 프론트매터와 내용 생성
-        const noteContent = `---
-Potentiation: 0
-Activated: ${activatedTime}
-tags:
-${defaultTags.map(tag => `  - ${tag}`).join('\n')}
----
-`;
+        const frontmatterManager = new FrontmatterManager(this.plugin);
+        const noteContent = frontmatterManager.generateFrontmatter();
 
         try {
             // 폴더가 존재하지 않을 때만 생성

@@ -1,5 +1,5 @@
 import { App, Notice, TFile } from 'obsidian';
-import { showConfirmationDialog } from '../../components/confirmationModal';
+import { showConfirmationDialog } from '../../../components/confirmationModal';
 
 export class RenameAttachments {
     private app: App;

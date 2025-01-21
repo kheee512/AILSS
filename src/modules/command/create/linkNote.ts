@@ -1,5 +1,6 @@
 import { App, Notice, MarkdownView, moment } from 'obsidian';
 import type AILSSPlugin from 'main';
+import { FrontmatterManager } from '../../maintenance/frontmatterManager';
 
 export class LinkNote {
     constructor(
@@ -24,7 +25,6 @@ export class LinkNote {
 
             const now = moment();
             const folderPath = now.format('YY/MM/DD/HH');
-            const activatedTime = now.format('YYYY-MM-DDTHH:mm:ss');
 
             const activeFile = this.app.workspace.getActiveFile();
             if (!activeFile) {
@@ -40,14 +40,9 @@ export class LinkNote {
                 ...(Array.isArray(currentTags) ? currentTags : [currentTags])
             ]));
 
-            // 노트 내용 생성 (태그 포함)
-            const noteContent = `---
-Potentiation: 0
-Activated: ${activatedTime}
-tags:
-${tags.map(tag => `  - ${tag}`).join('\n')}
----
-`;
+            // FrontmatterManager를 사용하여 프론트매터 생성
+            const frontmatterManager = new FrontmatterManager(this.plugin);
+            const noteContent = frontmatterManager.generateFrontmatter({ tags });
 
             // 폴더 생성
             if (!(await this.app.vault.adapter.exists(folderPath))) {
