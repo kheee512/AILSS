@@ -29,10 +29,7 @@ export class DeleteCurrentNote {
             let match;
 
             while ((match = attachmentRegex.exec(content)) !== null) {
-                const attachmentName = match[1];
-                const attachmentPath = currentFile.parent?.path 
-                    ? `${currentFile.parent.path}/${attachmentName}`
-                    : attachmentName;
+                const attachmentPath = match[1];
                 const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentPath);
                 
                 if (attachmentFile instanceof TFile) {

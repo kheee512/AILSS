@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile } from 'obsidian';
 import { NewNote } from './src/modules/command/create/newNote';
 import { LinkNote } from './src/modules/command/create/linkNote';
 import { UpdateTags } from './src/modules/command/update/updateTags';
@@ -7,7 +7,7 @@ import { RenameAttachments } from './src/modules/command/update/renameAttachment
 import { Potentiate } from './src/modules/command/update/potentiate';
 import { DeleteLink } from './src/modules/command/delete/deleteLink';
 import { DeleteCurrentNote } from './src/modules/command/delete/deleteCurrentNote';
-import { CleanEmptyFolders } from './src/modules/command/delete/cleanEmptyFolders';
+
 import { DeactivateNotes } from './src/modules/command/move/deactivateNotes';
 import { ActivateNotes } from './src/modules/command/move/activateNotes';
 
@@ -24,9 +24,11 @@ export default class AILSSPlugin extends Plugin {
 	private potentiateManager: Potentiate;
 	private deleteLinkManager: DeleteLink;
 	private deleteCurrentNoteManager: DeleteCurrentNote;
-	//private cleanEmptyFoldersManager: CleanEmptyFolders;
+	
 	private deactivateNotesManager: DeactivateNotes;
 	private activateNotesManager: ActivateNotes;
+	private pendingRename: boolean = false;
+	private renameTimeout: NodeJS.Timeout | null = null;
 
 	async onload() {
 		//await this.loadSettings();
@@ -48,22 +50,17 @@ export default class AILSSPlugin extends Plugin {
 		});
 
 		// 리본 메뉴에 링크 노트 생성 아이콘 추가
-		this.addRibbonIcon('link', '링크 노트 생성', () => {
+		this.addRibbonIcon('square-arrow-out-up-right', '링크 노트 생성', () => {
 			this.linkNoteManager.createLinkNote();
 		});
 
 		// 리본 메뉴에 연결된 노트 태그 업데이트 아이콘 추가
-		this.addRibbonIcon('tag', '연결된 노트 태그 업데이트', () => {
+		this.addRibbonIcon('tags', '연결된 노트 태그 업데이트', () => {
 			this.updateTagsManager.updateCurrentNoteTags();
 		});
 
-		// 리본 메뉴에 첨부파일 이름 변경 아이콘 추가
-		this.addRibbonIcon('file-edit', '첨부파일 이름 변경', () => {
-			this.renameAttachmentsManager.renameAttachments();
-		});
-
 		// 리본 메뉴에 강화 아이콘 추가
-		this.addRibbonIcon('arrow-up-circle', '노트 강화', () => {
+		this.addRibbonIcon('zap', '노트 강화', () => {
 			this.potentiateManager.potentiateNote();
 		});
 
@@ -73,12 +70,12 @@ export default class AILSSPlugin extends Plugin {
 		});
 
 		// 리본 메뉴에 비활성화 아이콘 추가
-		this.addRibbonIcon('archive', '태그로 노트 비활성화', () => {
+		this.addRibbonIcon('folder-output', '태그로 노트 비활성화', () => {
 			this.deactivateNotesManager.deactivateNotesByTag();
 		});
 
 		// 리본 메뉴에 활성화 아이콘 추가
-		this.addRibbonIcon('archive-restore', '노트 활성화', () => {
+		this.addRibbonIcon('folder-input', '노트 활성화', () => {
 			this.activateNotesManager.activateNotes();
 		});
 
@@ -103,13 +100,6 @@ export default class AILSSPlugin extends Plugin {
 			id: 'update-linked-notes-tags',
 			name: '연결된 노트 태그 업데이트',
 			callback: () => this.updateTagsManager.updateCurrentNoteTags()
-		});
-
-		// 커맨드 추가
-		this.addCommand({
-			id: 'rename-attachments',
-			name: '첨부파일 이름 변경',
-			callback: () => this.renameAttachmentsManager.renameAttachments()
 		});
 
 		// 강화 명령어 추가
@@ -147,16 +137,62 @@ export default class AILSSPlugin extends Plugin {
 			callback: () => this.activateNotesManager.activateNotes()
 		});
 
-
-
-
-
-
-
-
-
-
-
+		// 파일 생성 이벤트 리스너 추가
+		this.registerEvent(
+			this.app.vault.on('create', async (file) => {
+				if (!(file instanceof TFile)) return;
+				
+				// 첨부 파일 확장자 체크
+				const attachmentExtensions = [
+					// 이미지
+					'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp',
+					// 문서
+					'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+					// 오디오
+					'mp3', 'wav', 'ogg', 'm4a',
+					// 비디오
+					'mp4', 'webm', 'mov', 'avi',
+					// 기타
+					'zip', 'rar', '7z',
+					'txt', 'csv', 'json',
+				];
+				
+				const fileExtension = file.extension.toLowerCase();
+				
+				if (!attachmentExtensions.includes(fileExtension)) return;
+				
+				// 현재 활성화된 파일 가져오기
+				const activeFile = this.app.workspace.getActiveFile();
+				if (!activeFile) return;
+				
+				// 현재 파일의 내용 가져오기
+				const content = await this.app.vault.read(activeFile);
+				
+				// 방금 생성된 파일이 현재 문서에 포함되어 있는지 확인
+				const fileNamePattern = new RegExp(`!\\[\\[.*${file.path}.*\\]\\]`);
+				
+				// 이미 대기 중인 이름 변경 작업이 있다면 취소
+				if (this.renameTimeout) {
+					clearTimeout(this.renameTimeout);
+				}
+				
+				// 새로운 이름 변경 작업 예약
+				this.renameTimeout = setTimeout(async () => {
+					if (!this.pendingRename) {
+						this.pendingRename = true;
+						try {
+							const updatedContent = await this.app.vault.read(activeFile);
+							if (fileNamePattern.test(updatedContent)) {
+								await this.renameAttachmentsManager.renameAttachments();
+							}
+						} finally {
+							this.pendingRename = false;
+							this.renameTimeout = null;
+						}
+					}
+				}, 2000);
+			})
+		);
 
 		// This adds a complex command that can check whether the current state of the app allows execution of the command
 		this.addCommand({
@@ -189,7 +225,9 @@ export default class AILSSPlugin extends Plugin {
 	}
 
 	onunload() {
-
+		if (this.renameTimeout) {
+			clearTimeout(this.renameTimeout);
+		}
 	}
 
 	//async loadSettings() {

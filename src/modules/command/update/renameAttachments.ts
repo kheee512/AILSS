@@ -1,5 +1,4 @@
 import { App, Notice, TFile } from 'obsidian';
-import { showConfirmationDialog } from '../../../components/confirmationModal';
 
 export class RenameAttachments {
     private app: App;
@@ -20,19 +19,6 @@ export class RenameAttachments {
             const matches = Array.from(content.matchAll(attachmentPattern));
             
             if (matches.length === 0) {
-                new Notice("첨부 파일이 없습니다.");
-                return;
-            }
-
-            const confirmed = await showConfirmationDialog(this.app, {
-                message: "현재 노트의 첨부 파일들의 이름을 변경하시겠습니까?",
-                title: "첨부 파일 이름 변경",
-                confirmText: "변경",
-                cancelText: "취소"
-            });
-
-            if (!confirmed) {
-                new Notice("작업이 취소되었습니다.");
                 return;
             }
 
@@ -46,18 +32,22 @@ export class RenameAttachments {
                 const match = matches[i];
                 const attachmentName = match[1];
                 const oldEmbed = match[0];
-                const extension = attachmentName.split('.').pop() || '';
                 
-                // 현재 노트와 같은 디렉토리에서 첨부파일 찾기
-                const attachmentPath = currentDir ? `${currentDir}/${attachmentName}` : attachmentName;
-                const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentPath);
+                // 이미 이름이 변경된 파일은 건너뛰기 (파일명이 노트이름-숫자 형식인 경우)
+                if (attachmentName.includes(`${currentFile.basename}-`)) {
+                    continue;
+                }
+
+                const extension = attachmentName.split('.').pop() || '';
+                const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentName);
 
                 if (attachmentFile instanceof TFile) {
                     // 현재 노트 이름 + 인덱스로 새 파일명 생성
                     const newFileName = `${currentFile.basename}-${i + 1}.${extension}`;
-                    // 현재 노트의 디렉토리에 새 파일 경로 생성
+                    // 새 파일의 절대 경로 생성
                     const newPath = currentDir ? `${currentDir}/${newFileName}` : newFileName;
-                    const newEmbed = `![[${newFileName}]]`;
+                    // 절대 경로를 포함한 새 임베드 생성
+                    const newEmbed = `![[${newPath}]]`;
 
                     await this.app.fileManager.renameFile(attachmentFile, newPath);
                     updatedContent = updatedContent.replace(oldEmbed, newEmbed);
@@ -65,8 +55,10 @@ export class RenameAttachments {
                 }
             }
 
-            await this.app.vault.modify(currentFile, updatedContent);
-            new Notice(`${changedCount}개의 첨부 파일 이름이 변경되었습니다.`);
+            if (changedCount > 0) {
+                await this.app.vault.modify(currentFile, updatedContent);
+                new Notice(`${changedCount}개의 첨부 파일 이름이 변경되었습니다.`);
+            }
 
         } catch (error) {
             console.error("Error in RenameAttachments:", error);
