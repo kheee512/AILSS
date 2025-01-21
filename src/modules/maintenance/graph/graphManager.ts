@@ -1,4 +1,4 @@
-import { App } from 'obsidian';
+import { App, Notice } from 'obsidian';
 import { DEFAULT_GRAPH_CONFIG } from './defaultGraphConfig';
 import AILSSPlugin from '../../../../main';
 
@@ -60,6 +60,7 @@ export class GraphManager {
             await this.applyLocalGraphConfig();
         } catch (error) {
             console.error('로컬 그래프 설정 적용 중 오류:', error);
+            new Notice('그래프 설정 적용 중 오류가 발생했습니다.');
         }
     }
 }
