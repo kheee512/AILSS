@@ -11,6 +11,7 @@ export interface AILSSSettings {
     potentiateDelay: number;
     potentiateValue: number;
     maxPotentiation: number;
+    showCleanFoldersConfirm: boolean;
 }
 
 export const DEFAULT_SETTINGS: AILSSSettings = {
@@ -19,4 +20,5 @@ export const DEFAULT_SETTINGS: AILSSSettings = {
     potentiateDelay: 1440,
     potentiateValue: 1,
     maxPotentiation: 10,
+    showCleanFoldersConfirm: true,
 }

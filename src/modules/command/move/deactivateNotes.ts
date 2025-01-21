@@ -1,11 +1,16 @@
 import { App, Notice, TFile, Modal } from 'obsidian';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
+import { showTagSelectionDialog } from '../../../components/tagSelectionModal';
+import { CleanEmptyFolders } from '../delete/cleanEmptyFolders';
+import type AILSSPlugin from '../../../../main';
 
 export class DeactivateNotes {
     private app: App;
+    private plugin: AILSSPlugin;
 
-    constructor(app: App) {
+    constructor(app: App, plugin: AILSSPlugin) {
         this.app = app;
+        this.plugin = plugin;
     }
 
     async deactivateNotesByTag(): Promise<void> {
@@ -37,7 +42,7 @@ export class DeactivateNotes {
             let processedCount = 0;
             for (const note of notesToDeactivate) {
                 try {
-                    await this.moveNoteToDeactivateFolder(note);
+                    await this.moveNoteToDeactivateFolder(note, tags);
                     processedCount++;
                     new Notice(`진행 상황: ${processedCount}/${notesToDeactivate.size}`);
                 } catch (error) {
@@ -46,6 +51,10 @@ export class DeactivateNotes {
                 }
             }
 
+            // 빈 폴더 정리
+            const cleanEmptyFolders = new CleanEmptyFolders(this.app, this.plugin);
+            await cleanEmptyFolders.cleanEmptyFoldersInVault();
+
             new Notice("모든 노트가 비활성화되었습니다.");
         } catch (error) {
             console.error("Error in deactivateNotesByTag:", error);
@@ -53,35 +62,42 @@ export class DeactivateNotes {
         }
     }
 
-    private async moveNoteToDeactivateFolder(note: TFile): Promise<void> {
+    private async moveNoteToDeactivateFolder(note: TFile, tags: string[]): Promise<void> {
         const now = new Date();
-        const deactivatePath = `deactivate/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}/${String(now.getHours()).padStart(2, '0')}`;
+        const mainTag = tags[0].replace(/^#/, '').replace(/\//g, '-');
+        const year = String(now.getFullYear()).slice(-2);
+        const deactivatePath = `${mainTag}/${year}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}/${String(now.getHours()).padStart(2, '0')}`;
         
         // 대상 폴더 생성
         await this.createFolderIfNotExists(deactivatePath);
 
-        // 노트 이동
-        const newPath = `${deactivatePath}/${note.name}`;
-        await this.app.vault.rename(note, newPath);
-
-        // 첨부파일 이동
-        await this.moveAttachments(note, deactivatePath);
-    }
-
-    private async moveAttachments(note: TFile, targetPath: string): Promise<void> {
+        // 노트 내용 읽기
         const content = await this.app.vault.read(note);
+        
+        // 첨부파일 찾기 및 이동
         const attachmentRegex = /!\[\[(.*?)\]\]/g;
         let match;
 
+        // 현재 노트의 디렉토리 경로
+        const currentDir = note.parent?.path || '';
+
         while ((match = attachmentRegex.exec(content)) !== null) {
-            const attachmentPath = match[1].split('|')[0];
+            const attachmentName = match[1];
+            // 현재 노트 디렉토리에서 첨부파일 찾기
+            const attachmentPath = currentDir ? `${currentDir}/${attachmentName}` : attachmentName;
             const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentPath);
 
             if (attachmentFile instanceof TFile) {
-                const newPath = `${targetPath}/${attachmentFile.name}`;
-                await this.app.vault.rename(attachmentFile, newPath);
+                const newAttachmentPath = `${deactivatePath}/${attachmentFile.name}`;
+                // 첨부파일 이동
+                await this.app.vault.rename(attachmentFile, newAttachmentPath);
+                // 노트 내용의 링크는 그대로 유지 (이미 상대 경로 형식이므로)
             }
         }
+
+        // 노트 이동
+        const newPath = `${deactivatePath}/${note.name}`;
+        await this.app.vault.rename(note, newPath);
     }
 
     private async createFolderIfNotExists(path: string): Promise<void> {
@@ -114,62 +130,11 @@ export class DeactivateNotes {
     }
 
     private async showTagSelectionModal(): Promise<string[]> {
-        return new Promise((resolve) => {
-            new TagSelectionModal(this.app, resolve).open();
+        return showTagSelectionDialog(this.app, {
+            title: "비활성화할 노트의 태그 입력",
+            placeholder: "태그를 입력하세요 (쉼표로 구분)",
+            confirmText: "비활성화",
+            cancelText: "취소"
         });
-    }
-}
-
-class TagSelectionModal extends Modal {
-    private onSubmit: (tags: string[]) => void;
-
-    constructor(app: App, onSubmit: (tags: string[]) => void) {
-        super(app);
-        this.onSubmit = onSubmit;
-    }
-
-    onOpen() {
-        const { contentEl } = this;
-        contentEl.empty();
-        
-        const container = contentEl.createDiv({
-            cls: "modal-container",
-            attr: { style: "padding: 1rem;" }
-        });
-
-        container.createEl("h3", {
-            text: "비활성화할 노트의 태그 입력",
-            attr: { style: "margin-bottom: 1rem;" }
-        });
-
-        const input = container.createEl("input", {
-            type: "text",
-            attr: {
-                placeholder: "태그를 입력하세요 (쉼표로 구분)",
-                style: "width: 100%; margin-bottom: 1rem;"
-            }
-        });
-
-        const buttonContainer = container.createDiv({
-            attr: { style: "display: flex; justify-content: flex-end; gap: 0.5rem;" }
-        });
-
-        buttonContainer.createEl("button", { text: "취소" })
-            .onclick = () => {
-                this.close();
-                this.onSubmit([]);
-            };
-
-        buttonContainer.createEl("button", { text: "확인", cls: "mod-cta" })
-            .onclick = () => {
-                const tags = input.value.split(',').map(t => t.trim()).filter(t => t);
-                this.close();
-                this.onSubmit(tags);
-            };
-    }
-
-    onClose() {
-        const { contentEl } = this;
-        contentEl.empty();
     }
 }

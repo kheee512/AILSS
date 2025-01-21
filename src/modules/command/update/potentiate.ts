@@ -1,6 +1,7 @@
 import { App, Notice } from 'obsidian';
 import type AILSSPlugin from '../../../../main';
 import { FrontmatterManager } from '../../maintenance/frontmatterManager';
+import { showConfirmationDialog } from '../../../components/confirmationModal';
 
 export class Potentiate {
     private app: App;
@@ -44,6 +45,19 @@ export class Potentiate {
                 new Notice(`강화까지 ${Math.ceil(this.plugin.settings.potentiateDelay - minutesSinceLastActivation)}분 남았습니다.`);
                 return;
             }
+        }
+
+        // 사용자 확인 추가
+        const confirmed = await showConfirmationDialog(this.app, {
+            title: "노트 강화 확인",
+            message: `현재 노트의 강화 지수를 ${currentPotentiation} → ${currentPotentiation + this.plugin.settings.potentiateValue}로 증가시키시겠습니까?`,
+            confirmText: "강화",
+            cancelText: "취소"
+        });
+
+        if (!confirmed) {
+            new Notice("작업이 취소되었습니다.");
+            return;
         }
 
         // 강화 수행

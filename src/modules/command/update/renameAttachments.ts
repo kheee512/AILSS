@@ -15,6 +15,15 @@ export class RenameAttachments {
                 throw new Error("활성화된 파일이 없습니다.");
             }
 
+            const content = await this.app.vault.read(currentFile);
+            const attachmentPattern = /!\[\[(.*?)\]\]/g;
+            const matches = Array.from(content.matchAll(attachmentPattern));
+            
+            if (matches.length === 0) {
+                new Notice("첨부 파일이 없습니다.");
+                return;
+            }
+
             const confirmed = await showConfirmationDialog(this.app, {
                 message: "현재 노트의 첨부 파일들의 이름을 변경하시겠습니까?",
                 title: "첨부 파일 이름 변경",
@@ -27,53 +36,32 @@ export class RenameAttachments {
                 return;
             }
 
-            const content = await this.app.vault.read(currentFile);
-            const attachmentPattern = /!\[\[([^\]]+)\]\]/g;
-            const matches = Array.from(content.matchAll(attachmentPattern));
-            
-            if (matches.length === 0) {
-                new Notice("첨부 파일이 없습니다.");
-                return;
-            }
-
-            // 현재 존재하는 가장 큰 인덱스 찾기
-            let maxIndex = 0;
-            for (const match of matches) {
-                const fileName = match[1];
-                if (fileName.startsWith(currentFile.basename + '-')) {
-                    const indexStr = fileName.split('-')[1]?.split('.')[0];
-                    const index = parseInt(indexStr);
-                    if (!isNaN(index) && index > maxIndex) {
-                        maxIndex = index;
-                    }
-                }
-            }
-
             let updatedContent = content;
             let changedCount = 0;
 
-            for (const match of matches) {
-                const oldFileName = match[1];
-                const extension = oldFileName.split('.').pop() || '';
-                const oldEmbed = match[0];
+            // 현재 노트의 디렉토리 경로
+            const currentDir = currentFile.parent?.path || '';
 
-                // 파일명이 이미 올바른 형식인지 확인
-                if (!oldFileName.startsWith(currentFile.basename + '-') || 
-                    !oldFileName.split('-')[1]?.split('.')[0].match(/^\d+$/)) {
-                    maxIndex++;
-                    const newFileName = `${currentFile.basename}-${maxIndex}.${extension}`;
-                    const newPath = `${currentFile.parent?.path || ''}/${newFileName}`;
+            for (let i = 0; i < matches.length; i++) {
+                const match = matches[i];
+                const attachmentName = match[1];
+                const oldEmbed = match[0];
+                const extension = attachmentName.split('.').pop() || '';
+                
+                // 현재 노트와 같은 디렉토리에서 첨부파일 찾기
+                const attachmentPath = currentDir ? `${currentDir}/${attachmentName}` : attachmentName;
+                const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentPath);
+
+                if (attachmentFile instanceof TFile) {
+                    // 현재 노트 이름 + 인덱스로 새 파일명 생성
+                    const newFileName = `${currentFile.basename}-${i + 1}.${extension}`;
+                    // 현재 노트의 디렉토리에 새 파일 경로 생성
+                    const newPath = currentDir ? `${currentDir}/${newFileName}` : newFileName;
                     const newEmbed = `![[${newFileName}]]`;
 
-                    const oldFile = this.app.vault.getAbstractFileByPath(
-                        `${currentFile.parent?.path || ''}/${oldFileName}`
-                    );
-
-                    if (oldFile instanceof TFile) {
-                        await this.app.fileManager.renameFile(oldFile, newPath);
-                        updatedContent = updatedContent.replace(oldEmbed, newEmbed);
-                        changedCount++;
-                    }
+                    await this.app.fileManager.renameFile(attachmentFile, newPath);
+                    updatedContent = updatedContent.replace(oldEmbed, newEmbed);
+                    changedCount++;
                 }
             }
 

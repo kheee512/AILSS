@@ -1,30 +1,44 @@
 import { App, Notice, TFolder, TAbstractFile } from 'obsidian';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
+import type AILSSPlugin from '../../../../main';
 
 export class CleanEmptyFolders {
     private app: App;
+    private plugin: AILSSPlugin;
     private readonly MAX_DEPTH = 6;
     private deletedFolders: string[] = [];
 
-    constructor(app: App) {
+    constructor(app: App, plugin: AILSSPlugin) {
         this.app = app;
+        this.plugin = plugin;
     }
 
     async cleanEmptyFoldersInVault(): Promise<void> {
         try {
-            const confirmed = await this.getUserConfirmation();
-            if (!confirmed) {
-                this.showNotice("작업이 취소되었습니다.");
+            const emptyFolders = await this.findEmptyFolders();
+            if (emptyFolders.length === 0) {
                 return;
             }
 
-            // 루트 폴더부터 시작
-            const rootFolder = this.app.vault.getRoot();
-            await this.processFolder(rootFolder, 0);
+            let shouldProceed = true;
+            if (this.plugin.settings.showCleanFoldersConfirm) {
+                shouldProceed = await showConfirmationDialog(this.app, {
+                    title: "빈 폴더 정리",
+                    message: `${emptyFolders.length}개의 빈 폴더를 정리하시겠습니까?`,
+                    confirmText: "정리",
+                    cancelText: "취소"
+                });
+            }
 
-            this.handleCleanupResult();
+            if (shouldProceed) {
+                for (const folder of emptyFolders) {
+                    await this.app.vault.delete(folder);
+                }
+                new Notice(`${emptyFolders.length}개의 빈 폴더가 정리되었습니다.`);
+            }
         } catch (error) {
-            this.handleError(error);
+            console.error("Error cleaning empty folders:", error);
+            new Notice("빈 폴더 정리 중 오류가 발생했습니다.");
         }
     }
 
@@ -87,5 +101,12 @@ export class CleanEmptyFolders {
 
     private showNotice(message: string): void {
         new Notice(message);
+    }
+
+    private async findEmptyFolders(): Promise<TFolder[]> {
+        const emptyFolders: TFolder[] = [];
+        const rootFolder = this.app.vault.getRoot();
+        await this.processFolder(rootFolder, 0);
+        return emptyFolders;
     }
 }

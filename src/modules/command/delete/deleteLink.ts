@@ -1,13 +1,17 @@
-import { App, Notice, TFile, TFolder, Editor } from 'obsidian';
+import { App, Notice, TFile, TFolder } from 'obsidian';
 import type AILSSPlugin from '../../../../main';
+import { showConfirmationDialog } from '../../../components/confirmationModal';
+import { CleanEmptyFolders } from './cleanEmptyFolders';
 
 export class DeleteLink {
     private app: App;
     private plugin: AILSSPlugin;
+    private cleanEmptyFolders: CleanEmptyFolders;
 
     constructor(app: App, plugin: AILSSPlugin) {
         this.app = app;
         this.plugin = plugin;
+        this.cleanEmptyFolders = new CleanEmptyFolders(this.app, this.plugin);
     }
 
     async deleteLink() {
@@ -44,12 +48,25 @@ export class DeleteLink {
         try {
             const fileToDelete = this.app.vault.getAbstractFileByPath(filePath);
             if (fileToDelete instanceof TFile) {
+                // 사용자 확인 추가
+                const confirmed = await showConfirmationDialog(this.app, {
+                    title: "링크 삭제 확인",
+                    message: `"${fileToDelete.basename}"${linkType === 'attachment' ? ' 첨부파일' : ' 노트'}을(를) 삭제하시겠습니까?`,
+                    confirmText: "삭제",
+                    cancelText: "취소"
+                });
+
+                if (!confirmed) {
+                    new Notice("작업이 취소되었습니다.");
+                    return;
+                }
+
                 await this.app.vault.trash(fileToDelete, true);
                 editor.replaceSelection('');
                 new Notice('파일이 삭제되었습니다.');
 
-                // 빈 폴더 정리
-                await this.cleanEmptyFolders(filePath);
+                // CleanEmptyFolders 모듈 사용
+                await this.cleanEmptyFolders.cleanEmptyFoldersInVault();
             } else {
                 new Notice(`파일을 찾을 수 없습니다: ${filePath}`);
             }
@@ -82,26 +99,5 @@ export class DeleteLink {
             }
         }
         return null;
-    }
-
-    private async cleanEmptyFolders(filePath: string) {
-        const pathParts = filePath.split('/');
-        pathParts.pop(); // 파일명 제거
-
-        while (pathParts.length > 0) {
-            const folderPath = pathParts.join('/');
-            const folder = this.app.vault.getAbstractFileByPath(folderPath);
-            
-            if (folder instanceof TFolder) {
-                if (folder.children.length === 0) {
-                    await this.app.vault.delete(folder);
-                    pathParts.pop();
-                } else {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
     }
 }

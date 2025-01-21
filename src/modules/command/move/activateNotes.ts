@@ -1,22 +1,47 @@
 import { App, Notice, TFile, TFolder } from 'obsidian';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
+import { showTagSelectionDialog } from '../../../components/tagSelectionModal';
+import { CleanEmptyFolders } from '../delete/cleanEmptyFolders';
+import type AILSSPlugin from '../../../../main';
 
 export class ActivateNotes {
     private app: App;
+    private plugin: AILSSPlugin;
+    private cleanEmptyFolders: CleanEmptyFolders;
 
-    constructor(app: App) {
+    constructor(app: App, plugin: AILSSPlugin) {
         this.app = app;
+        this.plugin = plugin;
+        this.cleanEmptyFolders = new CleanEmptyFolders(this.app, this.plugin);
     }
 
     async activateNotes(): Promise<void> {
         try {
-            const deactivateFolder = this.app.vault.getAbstractFileByPath('deactivate');
-            if (!(deactivateFolder instanceof TFolder)) {
-                new Notice("비활성화된 노트가 없습니다.");
+            // 태그 입력 받기
+            const tags = await showTagSelectionDialog(this.app, {
+                title: "활성화할 노트의 태그 입력",
+                placeholder: "태그를 입력하세요",
+                confirmText: "활성화",
+                cancelText: "취소"
+            });
+
+            if (!tags || tags.length === 0) {
+                new Notice("태그가 입력되지 않았습니다.");
                 return;
             }
 
-            const deactivatedNotes = await this.findDeactivatedNotes(deactivateFolder);
+            // 태그를 폴더명 형식으로 변환
+            const folderName = tags[0].replace(/^#/, '').replace(/\//g, '-');
+            
+            // 해당 폴더 찾기
+            const folder = this.app.vault.getAbstractFileByPath(folderName);
+            if (!(folder instanceof TFolder)) {
+                new Notice(`'${folderName}' 폴더를 찾을 수 없습니다.`);
+                return;
+            }
+
+            // 폴더 내의 노트들 찾기
+            const deactivatedNotes = await this.findNotesInFolder(folder);
             if (deactivatedNotes.length === 0) {
                 new Notice("활성화할 노트를 찾을 수 없습니다.");
                 return;
@@ -47,7 +72,8 @@ export class ActivateNotes {
             }
 
             // 빈 폴더 정리
-            await this.cleanEmptyFolders(deactivateFolder);
+            await this.cleanEmptyFolders.cleanEmptyFoldersInVault();
+
             new Notice("모든 노트가 활성화되었습니다.");
 
         } catch (error) {
@@ -56,7 +82,7 @@ export class ActivateNotes {
         }
     }
 
-    private async findDeactivatedNotes(folder: TFolder): Promise<TFile[]> {
+    private async findNotesInFolder(folder: TFolder): Promise<TFile[]> {
         const notes: TFile[] = [];
         
         const processFolder = async (currentFolder: TFolder) => {
@@ -81,64 +107,32 @@ export class ActivateNotes {
         // 대상 폴더 생성
         await this.createFolderIfNotExists(activePath);
 
-        // 노트 이동
-        const newPath = `${activePath}/${note.name}`;
-        await this.app.vault.rename(note, newPath);
-
-        // 첨부파일 이동
-        await this.moveAttachments(note, activePath);
-    }
-
-    private async moveAttachments(note: TFile, targetPath: string): Promise<void> {
+        // 노트 내용 읽기
         const content = await this.app.vault.read(note);
+        
+        // 첨부파일 이동
         const attachmentRegex = /!\[\[(.*?)\]\]/g;
         let match;
 
         while ((match = attachmentRegex.exec(content)) !== null) {
-            const attachmentPath = match[1].split('|')[0];
+            const attachmentName = match[1];
+            const attachmentPath = `${note.parent?.path}/${attachmentName}`;
             const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentPath);
 
             if (attachmentFile instanceof TFile) {
-                const newPath = `${targetPath}/${attachmentFile.name}`;
-                await this.app.vault.rename(attachmentFile, newPath);
+                const newAttachmentPath = `${activePath}/${attachmentFile.name}`;
+                await this.app.vault.rename(attachmentFile, newAttachmentPath);
             }
         }
+
+        // 노트 이동
+        const newPath = `${activePath}/${note.name}`;
+        await this.app.vault.rename(note, newPath);
     }
 
     private async createFolderIfNotExists(path: string): Promise<void> {
         if (!(await this.app.vault.adapter.exists(path))) {
             await this.app.vault.createFolder(path);
-        }
-    }
-
-    private async cleanEmptyFolders(folder: TFolder): Promise<void> {
-        const processFolder = async (currentFolder: TFolder): Promise<boolean> => {
-            const children = currentFolder.children;
-            let isEmpty = true;
-
-            for (const child of children) {
-                if (child instanceof TFolder) {
-                    const childIsEmpty = await processFolder(child);
-                    if (!childIsEmpty) isEmpty = false;
-                } else {
-                    isEmpty = false;
-                }
-            }
-
-            if (isEmpty) {
-                await this.app.vault.delete(currentFolder);
-                return true;
-            }
-
-            return false;
-        };
-
-        await processFolder(folder);
-        
-        // deactivate 폴더가 비어있다면 삭제
-        const deactivateFolder = this.app.vault.getAbstractFileByPath('deactivate');
-        if (deactivateFolder instanceof TFolder && deactivateFolder.children.length === 0) {
-            await this.app.vault.delete(deactivateFolder);
         }
     }
 }

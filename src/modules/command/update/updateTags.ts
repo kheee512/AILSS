@@ -1,5 +1,6 @@
 import { App, Notice, TFile } from 'obsidian';
 import AILSSPlugin from '../../../../main';
+import { showConfirmationDialog } from '../../../components/confirmationModal';
 
 export class UpdateTags {
     private app: App;
@@ -31,6 +32,19 @@ export class UpdateTags {
 
             if (!Array.isArray(tags)) {
                 new Notice("태그 형식이 올바르지 않습니다.");
+                return;
+            }
+
+            // 사용자 확인 추가
+            const confirmed = await showConfirmationDialog(this.app, {
+                title: "태그 업데이트 확인",
+                message: `현재 노트의 태그(${tags.join(', ')})를 연결된 모든 노트에 적용하시겠습니까?`,
+                confirmText: "업데이트",
+                cancelText: "취소"
+            });
+
+            if (!confirmed) {
+                new Notice("작업이 취소되었습니다.");
                 return;
             }
 

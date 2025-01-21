@@ -62,5 +62,15 @@ export class AILSSSettingTab extends PluginSettingTab {
                     this.plugin.settings.maxPotentiation = Number(value);
                     await this.plugin.saveSettings();
                 }));
+
+        new Setting(containerEl)
+            .setName('빈 폴더 정리 확인')
+            .setDesc('빈 폴더를 정리하기 전에 확인 메시지를 표시할지 설정합니다.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.showCleanFoldersConfirm)
+                .onChange(async (value) => {
+                    this.plugin.settings.showCleanFoldersConfirm = value;
+                    await this.plugin.saveSettings();
+                }));
     }
 } 
