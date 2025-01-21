@@ -13,6 +13,8 @@ import { ActivateNotes } from './src/modules/command/move/activateNotes';
 
 //import { AILSSSettings, DEFAULT_SETTINGS } from './src/modules/settings/settings';
 
+import { GraphManager } from './src/modules/maintenance/graph/graphManager';
+
 // Remember to rename these classes and interfaces!
 
 export default class AILSSPlugin extends Plugin {
@@ -29,6 +31,7 @@ export default class AILSSPlugin extends Plugin {
 	private activateNotesManager: ActivateNotes;
 	private pendingRename: boolean = false;
 	private renameTimeout: NodeJS.Timeout | null = null;
+	private graphManager: GraphManager;
 
 	async onload() {
 		//await this.loadSettings();
@@ -43,6 +46,9 @@ export default class AILSSPlugin extends Plugin {
 		//this.cleanEmptyFoldersManager = new CleanEmptyFolders(this.app, this);
 		this.deactivateNotesManager = new DeactivateNotes(this.app, this);
 		this.activateNotesManager = new ActivateNotes(this.app, this);
+
+		// GraphManager 초기화
+		this.graphManager = new GraphManager(this.app, this);
 
 		// 리본 메뉴에 새 노트 생성 아이콘 추가
 		this.addRibbonIcon('file-plus', '새 노트 생성', () => {
