@@ -15,7 +15,8 @@ export class AIBatchProcessor {
             
             const batchResults = await Promise.all(
                 batch.map(async (item, index) => {
-                    console.log(`${progressMessage} (${i + index + 1}/${items.length})`);
+                    //console.log(`${progressMessage} (${i + index + 1}/${items.length})`);
+                    new Notice(`${progressMessage} (${i + index + 1}/${items.length})`);
                     const result = await processor(item, i + index, items.length);
                     return result;
                 })

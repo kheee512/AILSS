@@ -54,7 +54,7 @@ export class AILatexMath {
             await AIEditorUtils.insertAfterSelection(editor, response);
             new Notice('LaTeX 수학 코드가 성공적으로 생성되었습니다.');
         } catch (error) {
-            console.error('LaTeX 수학 코드 생성 중 오류 발생:', error);
+            //console.error('LaTeX 수학 코드 생성 중 오류 발생:', error);
             new Notice('LaTeX 수학 코드 생성 중 오류가 발생했습니다.');
         }
     }

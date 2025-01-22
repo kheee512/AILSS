@@ -71,6 +71,7 @@ export class GraphManager {
                     appliedCount++;
                 } catch (error) {
                     console.warn('그래프 설정 적용 실패:', error);
+                    new Notice('그래프 설정 적용 실패:', error);
                 }
             }
 

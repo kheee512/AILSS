@@ -314,7 +314,7 @@ export default class AILSSPlugin extends Plugin {
 							this.renameTimeout = null;
 						}
 					}
-				}, 2000);
+				}, 1500); // 1.5초 딜레이
 			})
 		);
 	}

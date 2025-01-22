@@ -7,7 +7,8 @@ export class AIImageUtils {
         imageFile: TFile
     }> {
         try {
-            console.log(`이미지 파일 읽기 시작: ${imagePath}`);
+            //console.log(`이미지 파일 읽기 시작: ${imagePath}`);
+            new Notice(`이미지 파일 읽기 시작: ${imagePath}`);
             
             const imageFile = app.vault.getAbstractFileByPath(imagePath);
             if (!(imageFile instanceof TFile)) {
@@ -34,7 +35,8 @@ export class AIImageUtils {
                 imageFile
             };
         } catch (error) {
-            console.error('이미지 처리 중 오류:', error);
+            //console.error('이미지 처리 중 오류:', error);
+            new Notice('이미지 처리 중 오류:', error);
             throw error;
         }
     }

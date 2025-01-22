@@ -14,12 +14,12 @@ export class AIVisualizer {
 
     async main() {
         try {
-            console.log('AIVisualizer main() 시작');
+            //console.log('AIVisualizer main() 시작');
             const editor = AIEditorUtils.getActiveEditor(this.app);
             const selectedText = editor.getSelection();
             
             if (!selectedText) {
-                console.log('선택된 텍스트 없음');
+                //console.log('선택된 텍스트 없음');
                 new Notice('텍스트를 선택해주세요.');
                 return;
             }
@@ -158,11 +158,11 @@ ${selectedText}
    - 관계 및 흐름 설명
    - 중요 포인트 강조`;
 
-            console.log('AI 요청 시작', {
-                model: this.plugin.settings.selectedAIModel,
-                maxTokens: 4500,
-                temperature: 0.15
-            });
+            //console.log('AI 요청 시작', {
+            //    model: this.plugin.settings.selectedAIModel,
+            //    maxTokens: 4500,
+            //    temperature: 0.15
+            //});
 
             new Notice('Mermaid 다이어그램 생성 중...');
             const response = await requestToAI(this.plugin, {
@@ -172,12 +172,12 @@ ${selectedText}
                 temperature: 0.15
             });
 
-            console.log('AI 응답 받음');
+            //console.log('AI 응답 받음');
             await AIEditorUtils.insertAfterSelection(editor, response);
             new Notice('Mermaid 다이어그램이 성공적으로 생성되었습니다.');
 
         } catch (error) {
-            console.error('다이어그램 생성 중 상세 오류:', error);
+            //console.error('다이어그램 생성 중 상세 오류:', error);
             new Notice('다이어그램 생성 중 오류가 발생했습니다.');
         }
     }

@@ -69,7 +69,7 @@ ${content}
             new Notice('노트 구조화가 완료되었습니다.');
 
         } catch (error) {
-            console.error('노트 구조화 중 오류 발생:', error);
+            //console.error('노트 구조화 중 오류 발생:', error);
             new Notice('노트 구조화 중 오류가 발생했습니다.');
         }
     }

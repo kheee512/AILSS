@@ -75,7 +75,7 @@ ${selectedText}`;
                 {line: endPos.line, ch: editor.getLine(endPos.line).length});
             new Notice('답변이 성공적으로 추가되었습니다.');
         } catch (error) {
-            console.error('AI 답변 생성 중 오류 발생:', error);
+            //console.error('AI 답변 생성 중 오류 발생:', error);
             new Notice('AI 답변 생성 중 오류가 발생했습니다.');
         }
     }

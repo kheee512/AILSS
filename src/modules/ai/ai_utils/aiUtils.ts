@@ -10,12 +10,12 @@ interface AIPrompt {
 }
 
 function logAPIRequest(provider: string, prompt: AIPrompt) {
-    console.log(`=== ${provider} 요청 정보 ===`);
-    console.log('시스템 프롬프트:', prompt.systemPrompt);
-    console.log('사용자 프롬프트:', prompt.userPrompt);
-    console.log('온도:', prompt.temperature);
-    console.log('최대 토큰:', prompt.max_tokens);
-    console.log('=====================');
+    //console.log(`=== ${provider} 요청 정보 ===`);
+    //console.log('시스템 프롬프트:', prompt.systemPrompt);
+    //console.log('사용자 프롬프트:', prompt.userPrompt);
+    //console.log('온도:', prompt.temperature);
+    //console.log('최대 토큰:', prompt.max_tokens);
+    //console.log('=====================');
 }
 
 function logAPIResponse(provider: string, response: string, usage: any): string {
@@ -30,10 +30,10 @@ function logAPIResponse(provider: string, response: string, usage: any): string 
                         `출력: ${usageInfo.출력_토큰}\n` +
                         `전체: ${usageInfo.전체_토큰}`;
 
-    console.log(`=== ${provider} 응답 정보 ===`);
-    console.log('응답:', response);
-    console.log('토큰 사용량:', usageInfo);
-    console.log('=====================');
+    //console.log(`=== ${provider} 응답 정보 ===`);
+    //console.log('응답:', response);
+    //console.log('토큰 사용량:', usageInfo);
+    //console.log('=====================');
 
     new Notice(usageMessage, 5000);
 
@@ -74,13 +74,14 @@ export async function requestToAI(plugin: AILSSPlugin, prompt: AIPrompt): Promis
 }
 
 async function requestToOpenAI(apiKey: string, prompt: AIPrompt, model: string): Promise<string> {
-    logAPIRequest('OpenAI', prompt);
-    console.log('OpenAI 요청 정보:', {
-        systemPrompt: prompt.systemPrompt,
-        userPrompt: prompt.userPrompt,
-        temperature: prompt.temperature,
-        max_tokens: prompt.max_tokens
-    });
+    //logAPIRequest('OpenAI', prompt);
+    //console.log('OpenAI 요청 정보:', {
+    //    systemPrompt: prompt.systemPrompt,
+    //    userPrompt: prompt.userPrompt,
+    //    temperature: prompt.temperature,
+    //    max_tokens: prompt.max_tokens
+    //});
+    new Notice('OpenAI API 요청 시작');
     
     const url = 'https://api.openai.com/v1/chat/completions';
     const headers = {
@@ -110,12 +111,14 @@ async function requestToOpenAI(apiKey: string, prompt: AIPrompt, model: string):
             const aiResponse = response.json.choices[0].message.content.trim();
             return logAPIResponse('OpenAI', aiResponse, response.json.usage);
         } else {
-            console.error('OpenAI API 오류 응답:', response);
+            //console.error('OpenAI API 오류 응답:', response);
+            new Notice('OpenAI API 오류 응답:', response.status);
             const errorBody = JSON.parse(response.text);
             throw new Error(`OpenAI API 요청 실패: 상태 코드 ${response.status}, 오류 타입: ${errorBody.error.type}, 메시지: ${errorBody.error.message}`);
         }
     } catch (error) {
-        console.error('OpenAI API 요청 중 오류 발생:', error);
+        //console.error('OpenAI API 요청 중 오류 발생:', error);
+        new Notice('OpenAI API 요청 중 오류 발생:', error);
         if (error instanceof Error) {
             if ('response' in error) {
                 const responseError = error as any;
@@ -131,21 +134,22 @@ async function requestToOpenAI(apiKey: string, prompt: AIPrompt, model: string):
 }
 
 async function requestToClaude(apiKey: string, prompt: AIPrompt, model: string): Promise<string> {
-    logAPIRequest('Claude', prompt);
-    console.log('Claude 요청 정보:', {
-        systemPrompt: prompt.systemPrompt,
-        userPrompt: prompt.userPrompt,
-        temperature: prompt.temperature,
-        max_tokens: prompt.max_tokens
-    });
-
+    //logAPIRequest('Claude', prompt);
+    //console.log('Claude 요청 정보:', {
+    //    systemPrompt: prompt.systemPrompt,
+    //    userPrompt: prompt.userPrompt,
+    //    temperature: prompt.temperature,
+    //    max_tokens: prompt.max_tokens
+    //});
+    
     const anthropic = new Anthropic({
         apiKey: apiKey,
         dangerouslyAllowBrowser: true
     });
 
     try {
-        console.log('Claude API 요청 시작');
+        //console.log('Claude API 요청 시작');
+        new Notice('Claude API 요청 시작');
         const response = await anthropic.messages.create({
             model: model,
             max_tokens: prompt.max_tokens,
@@ -161,21 +165,25 @@ async function requestToClaude(apiKey: string, prompt: AIPrompt, model: string):
             if ('text' in content) {
                 return logAPIResponse('Claude', content.text, response.usage);
             } else {
-                console.error('Claude API 응답 형식 오류:', response);
+                //console.error('Claude API 응답 형식 오류:', response);
+                new Notice('Claude API 응답 형식 오류');
                 throw new Error('Claude API 응답의 내용 형식이 예상과 다릅니다.');
             }
         } else {
-            console.error('Claude API 빈 응답:', response);
+            //console.error('Claude API 빈 응답:', response);
+            new Notice('Claude API 빈 응답');
             throw new Error('Claude API 응답에 내용이 없습니다.');
         }
     } catch (error) {
-        console.error('Claude API 요청 중 예외 발생:', error);
+        //console.error('Claude API 요청 중 예외 발생:', error);
+        new Notice('Claude API 요청 중 예외 발생:', error);
         if (error instanceof Anthropic.APIError) {
-            console.error('Claude API 오류 상세:', {
-                status: error.status,
-                message: error.message,
-                name: error.name
-            });
+            //console.error('Claude API 오류 상세:', {
+            //    status: error.status,
+            //    message: error.message,
+            //    name: error.name
+            //});
+            new Notice(`Claude API 오류: ${error.message}, 상태: ${error.status}, 유형: ${error.name}`);
             throw new Error(`Claude API 오류: ${error.message}, 상태: ${error.status}, 유형: ${error.name}`);
         } else if (error instanceof Error) {
             throw new Error(`Claude API 오류: ${error.message}`);
@@ -186,14 +194,15 @@ async function requestToClaude(apiKey: string, prompt: AIPrompt, model: string):
 }
 
 async function requestToPerplexity(apiKey: string, prompt: AIPrompt, model: string): Promise<string> {
-    logAPIRequest('Perplexity', prompt);
-    console.log('Perplexity 요청 정보:', {
-        systemPrompt: prompt.systemPrompt,
-        userPrompt: prompt.userPrompt,
-        temperature: prompt.temperature,
-        max_tokens: prompt.max_tokens
-    });
+    //logAPIRequest('Perplexity', prompt);
+    //console.log('Perplexity 요청 정보:', {
+    //    systemPrompt: prompt.systemPrompt,
+    //    userPrompt: prompt.userPrompt,
+    //    temperature: prompt.temperature,
+    //    max_tokens: prompt.max_tokens
+    //});
 
+    new Notice('Perplexity API 요청 시작');
     const url = 'https://api.perplexity.ai/chat/completions';
     const headers = {
         'Authorization': `Bearer ${apiKey}`,
@@ -222,11 +231,13 @@ async function requestToPerplexity(apiKey: string, prompt: AIPrompt, model: stri
             const aiResponse = response.json.choices[0].message.content.trim();
             return logAPIResponse('Perplexity', aiResponse, response.json.usage);
         } else {
-            console.error('Perplexity API 오류 응답:', response);
+            //console.error('Perplexity API 오류 응답:', response);
+            new Notice('Perplexity API 오류 응답:', response.status);
             throw new Error(`Perplexity API 요청 실패: 상태 코드 ${response.status}`);
         }
     } catch (error) {
-        console.error('Perplexity API 요청 중 오류 발생:', error);
+        //console.error('Perplexity API 요청 중 오류 발생:', error);
+        new Notice('Perplexity API 요청 중 오류 발생:', error);
         if (error instanceof Error) {
             throw new Error(`Perplexity API 오류: ${error.message}`);
         } else {
