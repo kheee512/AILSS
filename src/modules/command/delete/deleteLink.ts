@@ -64,33 +64,34 @@ export class DeleteLink {
                 try {
                     await this.app.vault.delete(fileToDelete);
                 } catch (deleteError) {
-                    //console.log('일반 삭제 실패, trash로 시도:', deleteError);
                     new Notice('파일 삭제에 실패했습니다. 오류: ' + deleteError.message);
                     new Notice('trash로 시도합니다.');
                     await this.app.vault.trash(fileToDelete, false);
                 }
-                
-                if (linkType === 'attachment') {
-                    editor.replaceSelection('');
-                } else {
-                    const titleMatch = selectedText.match(/\[\[(.*?)(?:\|.*?)?\]\]/);
-                    if (titleMatch) {
-                        const fullPath = titleMatch[1];
-                        if (fullPath.includes('|')) {
-                            const alias = fullPath.split('|')[1];
-                            editor.replaceSelection(alias);
-                        } else {
-                            const noteName = fullPath.split('/').pop()?.replace(/\.md$/, '') || '';
-                            editor.replaceSelection(noteName);
-                        }
+            }
+            
+            // 파일 존재 여부와 관계없이 링크 텍스트 처리
+            if (linkType === 'attachment') {
+                editor.replaceSelection('');
+            } else {
+                const titleMatch = selectedText.match(/\[\[(.*?)(?:\|.*?)?\]\]/);
+                if (titleMatch) {
+                    const fullPath = titleMatch[1];
+                    if (fullPath.includes('|')) {
+                        const alias = fullPath.split('|')[1];
+                        editor.replaceSelection(alias);
+                    } else {
+                        const noteName = fullPath.split('/').pop()?.replace(/\.md$/, '') || '';
+                        editor.replaceSelection(noteName);
                     }
                 }
-                
+            }
+            
+            if (fileToDelete instanceof TFile) {
                 new Notice('파일이 삭제되었습니다.');
-
                 await this.cleanEmptyFolders.cleanEmptyFoldersInVault();
             } else {
-                new Notice(`파일을 찾을 수 없습니다: ${filePath}`);
+                new Notice(`파일이 이미 삭제되었거나 존재하지 않습니다: ${filePath}`);
             }
         } catch (error) {
             console.error('파일 삭제 중 오류 발생:', error);
