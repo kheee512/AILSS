@@ -9,6 +9,7 @@ interface FileStats {
 
 export class FileCountManager {
     private static instance: FileCountManager;
+    private readonly STATS_KEY = 'fileStats';  // 통계 데이터용 키 추가
     private stats: FileStats = {
         noteCount: 0,
         attachmentCount: 0,
@@ -79,16 +80,14 @@ export class FileCountManager {
     }
 
     private async saveStats(): Promise<void> {
-        await this.plugin.saveData(this.stats);
+        // 플러그인의 전체 데이터를 먼저 로드
+        const allData = await this.plugin.loadData() || {};
+        // 통계 데이터만 업데이트
+        allData[this.STATS_KEY] = this.stats;
+        // 전체 데이터 저장
+        await this.plugin.saveData(allData);
     }
-
-    private async loadStats(): Promise<void> {
-        const savedStats = await this.plugin.loadData();
-        if (savedStats) {
-            this.stats = savedStats;
-        }
-    }
-
+    
     async getNoteCount(): Promise<number> {
         return this.stats.noteCount;
     }
