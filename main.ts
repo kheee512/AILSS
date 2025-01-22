@@ -162,6 +162,7 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'update-linked-notes-tags',
 			name: '연결된 노트 태그 업데이트',
+			icon: 'tags',
 			callback: () => this.updateTagsManager.updateCurrentNoteTags()
 		});
 
@@ -169,6 +170,7 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'potentiate-note',
 			name: '노트 강화',
+			icon: 'zap',
 			callback: () => this.potentiateManager.potentiateNote()
 		});
 
@@ -176,6 +178,7 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'delete-link',
 			name: '선택한 링크와 파일 삭제',
+			icon: 'trash',
 			editorCallback: () => this.deleteLinkManager.deleteLink()
 		});
 
@@ -183,6 +186,7 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'delete-current-note',
 			name: '현재 노트 삭제',
+			icon: 'trash',
 			callback: () => this.deleteCurrentNoteManager.deleteNote()
 		});
 
@@ -190,6 +194,7 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'deactivate-notes-by-tag',
 			name: '태그로 노트 비활성화',
+			icon: 'folder-output',
 			callback: () => this.deactivateNotesManager.deactivateNotesByTag()
 		});
 
@@ -197,6 +202,7 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'activate-notes',
 			name: '노트 활성화',
+			icon: 'folder-input',
 			callback: () => this.activateNotesManager.activateNotes()
 		});
 
@@ -204,36 +210,42 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'ai-ocr-analysis',
 			name: 'OCR 분석',
+			icon: 'file-scan',
 			editorCallback: () => this.aiOCR.main()
 		});
 
 		this.addCommand({
 			id: 'ai-image-analysis',
 			name: '이미지 분석',
+			icon: 'image',
 			editorCallback: () => this.aiImageAnalysis.main()
 		});
 
 		this.addCommand({
 			id: 'ai-answer',
 			name: 'AI 답변',
+			icon: 'message-circle-question',
 			editorCallback: () => this.aiAnswer.main()
 		});
 
 		this.addCommand({
 			id: 'ai-link-note',
 			name: 'AI 링크 노트',
+			icon: 'link-2',
 			editorCallback: () => this.aiLinkNote.createAILinkNote()
 		});
 
 		this.addCommand({
 			id: 'ai-latex-math',
 			name: 'LaTeX 변환',
+			icon: 'sigma',
 			editorCallback: () => this.aiLatexMath.main()
 		});
 
 		this.addCommand({
 			id: 'ai-visualizer',
 			name: '다이어그램 생성',
+			icon: 'bar-chart',
 			editorCallback: () => this.aiVisualizer.main()
 		});
 
@@ -241,6 +253,7 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'ai-structure-note',
 			name: '노트 구조화',
+			icon: 'list',
 			editorCallback: () => this.aiStructureNote.main()
 		});
 
