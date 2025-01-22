@@ -1,7 +1,7 @@
 export const DEFAULT_GRAPH_CONFIG = {
     "collapse-filter": false,
     "search": "",
-    "showTags": true,
+    "showTags": false,
     "showAttachments": false,
     "hideUnresolved": false,
     "showOrphans": true,
@@ -13,10 +13,10 @@ export const DEFAULT_GRAPH_CONFIG = {
     "lineSizeMultiplier": 1,
     "collapse-forces": true,
     "centerStrength": 0.9,
-    "repelStrength": 14,
+    "repelStrength": 10,
     "linkStrength": 1,
     "linkDistance": 30,
-    "scale": 1.5,
+    "scale": 1.3,
 
     "localJumps": 2,
     "localBacklinks": true,
