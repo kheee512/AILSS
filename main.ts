@@ -17,6 +17,7 @@ import { AILinkNote } from './src/modules/ai/text/aiLinkNote';
 import { AILatexMath } from './src/modules/ai/text/aiLatexMath';
 import { AIVisualizer } from './src/modules/ai/text/aiVisualizer';
 import { FileCountManager } from './src/modules/maintenance/utils/fileCountManager';
+import { AIStructureNote } from './src/modules/ai/text/aiStructureNote';
 
 
 
@@ -42,6 +43,7 @@ export default class AILSSPlugin extends Plugin {
 	private aiLatexMath: AILatexMath;
 	private aiVisualizer: AIVisualizer;
 	private fileCountManager: FileCountManager;
+	private aiStructureNote: AIStructureNote;
 
 	async onload() {
 		await this.loadSettings();
@@ -71,6 +73,9 @@ export default class AILSSPlugin extends Plugin {
 
 		// FileCountManager 초기화
 		this.fileCountManager = FileCountManager.getInstance(this.app, this);
+
+		// AIStructureNote 초기화
+		this.aiStructureNote = new AIStructureNote(this.app, this);
 
 		// 리본 메뉴에 새 노트 생성 아이콘 추가
 		this.addRibbonIcon('file-plus', '새 노트 생성', () => {
@@ -130,6 +135,11 @@ export default class AILSSPlugin extends Plugin {
 
 		this.addRibbonIcon('bar-chart', '다이어그램 생성', () => {
 			this.aiVisualizer.main();
+		});
+
+		// 리본 메뉴에 구조화 아이콘 추가
+		this.addRibbonIcon('list', '노트 구조화', () => {
+			this.aiStructureNote.main();
 		});
 
 		// 새 노트 생성 명령어 추가
@@ -225,6 +235,13 @@ export default class AILSSPlugin extends Plugin {
 			id: 'ai-visualizer',
 			name: '다이어그램 생성',
 			editorCallback: () => this.aiVisualizer.main()
+		});
+
+		// 구조화 명령어 추가
+		this.addCommand({
+			id: 'ai-structure-note',
+			name: '노트 구조화',
+			editorCallback: () => this.aiStructureNote.main()
 		});
 
 		// 파일 생성 이벤트 리스너 추가
