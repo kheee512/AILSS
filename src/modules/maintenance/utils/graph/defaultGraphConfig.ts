@@ -12,12 +12,12 @@ export const DEFAULT_GRAPH_CONFIG = {
     "nodeSizeMultiplier": 1,
     "lineSizeMultiplier": 1,
     "collapse-forces": true,
-    "centerStrength": 0.3,
-    "repelStrength": 10,
+    "centerStrength": 0.9,
+    "repelStrength": 14,
     "linkStrength": 1,
     "linkDistance": 30,
-    "scale": 1.5,
-    
+    "scale": 1.8,
+
     "localJumps": 1,
     "localBacklinks": true,
     "localForelinks": true,
