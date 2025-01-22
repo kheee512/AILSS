@@ -57,7 +57,7 @@ export class Potentiate {
         });
 
         if (!confirmed) {
-            new Notice("작업이 취소되었습니다.");
+            new Notice("강화가 취소되었습니다.");
             return;
         }
 
