@@ -101,8 +101,13 @@ export class UpdateTags {
         // 기본 태그는 유지하고, 새로운 태그에서 기본 태그를 제외한 태그만 추가
         const nonDefaultNewTags = FrontmatterManager.getNonDefaultTags(newTags);
         
-        // 기본 태그와 새로운 태그 합치기
-        frontmatter.tags = [...FrontmatterManager.DEFAULT_TAGS, ...nonDefaultNewTags];
+        // 현재 파일의 기존 태그에서 기본 태그만 유지
+        const existingDefaultTags = frontmatter.tags.filter((tag: string) => 
+            FrontmatterManager.DEFAULT_TAGS.includes(tag)
+        );
+
+        // 기존 기본 태그와 새로운 비기본 태그 합치기
+        frontmatter.tags = [...existingDefaultTags, ...nonDefaultNewTags];
 
         const updatedContent = frontmatterManager.updateFrontmatter(content, {
             tags: frontmatter.tags
