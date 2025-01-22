@@ -1,5 +1,6 @@
 import { App, TFile } from 'obsidian';
 import type AILSSPlugin from 'main';
+import { PathSettings } from '../settings/pathSettings';
 
 interface FileStats {
     noteCount: number;
@@ -59,8 +60,7 @@ export class FileCountManager {
         let attachmentCount = 0;
 
         allFiles.forEach((file: TFile) => {
-            const pathRegex = /^\d{2}\/\d{2}\/\d{2}\/\d{2}\/\d{2}\//;
-            if (pathRegex.test(file.path)) {
+            if (PathSettings.isValidPath(file.path)) {
                 if (file.extension === 'md') {
                     noteCount++;
                 } else {

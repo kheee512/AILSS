@@ -4,13 +4,13 @@ import type AILSSPlugin from 'main';
 
 export class PathSettings {
     // 기본 경로 포맷
-    static readonly PATH_FORMAT = 'YY/MM/DD/HH/mm';
+    static readonly PATH_FORMAT = 'YY-MM/DD/HH/mm';
     
     // 특수 폴더명
     static readonly DEACTIVATED_ROOT = 'deactivated';
     
     // 폴더 깊이 제한
-    static readonly MAX_FOLDER_DEPTH = 8; // YY/MM/DD/HH/mm 구조에 맞춰 증가
+    static readonly MAX_FOLDER_DEPTH = 7; // YY-MM/DD/HH/mm 구조에 맞춰 증가
     
     // 파일 관련 설정
     static readonly DEFAULT_FILE_EXTENSION = '.md';
@@ -18,6 +18,9 @@ export class PathSettings {
     
     // 최대 노트 개수 제한
     static readonly MAX_NOTES = 1000; 
+    
+    // 경로 포맷 관련 정규식 추가
+    static readonly PATH_REGEX = /^\d{2}-\d{2}\/\d{2}\/\d{2}\/\d{2}\//;
     
     // 경로 생성 헬퍼 메서드
     static getTimestampedPath(date: moment.Moment): string {
@@ -36,5 +39,10 @@ export class PathSettings {
         const fileCountManager = FileCountManager.getInstance(app, plugin);
         const noteCount = await fileCountManager.getNoteCount();
         return noteCount < this.MAX_NOTES;
+    }
+    
+    // 경로 검증 헬퍼 메서드 추가
+    static isValidPath(path: string): boolean {
+        return this.PATH_REGEX.test(path);
     }
 } 
