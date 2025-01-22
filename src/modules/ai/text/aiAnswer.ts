@@ -71,7 +71,7 @@ ${selectedText}`;
             });
 
             // 저장된 위치 정보를 사용하여 답변 삽입
-            editor.replaceRange(`\n\n%%\nAI 답변:\n${response}\n%%\n`,
+            editor.replaceRange(`\n${response}\n`,
                 {line: endPos.line, ch: editor.getLine(endPos.line).length});
             new Notice('답변이 성공적으로 추가되었습니다.');
         } catch (error) {

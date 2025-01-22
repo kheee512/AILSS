@@ -49,7 +49,6 @@ export class DeleteLink {
         try {
             const fileToDelete = this.app.vault.getAbstractFileByPath(filePath);
             if (fileToDelete instanceof TFile) {
-                // 사용자 확인 추가
                 const confirmed = await showConfirmationDialog(this.app, {
                     title: "링크 삭제 확인",
                     message: `"${fileToDelete.basename}"${linkType === 'attachment' ? ' 첨부파일' : ' 노트'}을(를) 삭제하시겠습니까?`,
@@ -63,10 +62,25 @@ export class DeleteLink {
                 }
 
                 await this.app.vault.trash(fileToDelete, true);
-                editor.replaceSelection('');
+                
+                if (linkType === 'attachment') {
+                    editor.replaceSelection('');
+                } else {
+                    const titleMatch = selectedText.match(/\[\[(.*?)(?:\|.*?)?\]\]/);
+                    if (titleMatch) {
+                        const fullPath = titleMatch[1];
+                        if (fullPath.includes('|')) {
+                            const alias = fullPath.split('|')[1];
+                            editor.replaceSelection(alias);
+                        } else {
+                            const noteName = fullPath.split('/').pop()?.replace(/\.md$/, '') || '';
+                            editor.replaceSelection(noteName);
+                        }
+                    }
+                }
+                
                 new Notice('파일이 삭제되었습니다.');
 
-                // CleanEmptyFolders 모듈 사용
                 await this.cleanEmptyFolders.cleanEmptyFoldersInVault();
             } else {
                 new Notice(`파일을 찾을 수 없습니다: ${filePath}`);

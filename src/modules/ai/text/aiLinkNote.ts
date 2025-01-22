@@ -62,7 +62,7 @@ export class AILinkNote {
             // 프론트매터 생성 (상속받은 태그 포함)
             const noteContent = frontmatterManager.generateFrontmatter({
                 tags: [...FrontmatterManager.DEFAULT_TAGS, ...nonDefaultTags]
-            }) + `\n# ${selectedText}\n\n${aiContent}`;
+            }) + `\n${aiContent}`;
 
             // 폴더 생성
             if (!(await this.app.vault.adapter.exists(folderPath))) {
@@ -110,6 +110,7 @@ export class AILinkNote {
 3. 관련된 이론이나 개념
 4. 실제 적용 사례나 예시
 5. 주의해야 할 점이나 한계
+6. "선택된 텍스트 분석" 등 불필요한 내용 제거
 
 결과는 다음 형식으로 작성해주세요:
 - 핵심 개념
