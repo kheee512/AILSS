@@ -59,9 +59,9 @@ export class AILinkNote {
             // 기본 태그를 제외한 태그만 가져오기
             const nonDefaultTags = FrontmatterManager.getNonDefaultTags(currentTags);
 
-            // 프론트매터 생성 (상속받은 태그 포함)
+            // 프론트매터 생성 (기본 태그 제외하고 상속받은 태그만 포함)
             const noteContent = frontmatterManager.generateFrontmatter({
-                tags: [...FrontmatterManager.DEFAULT_TAGS, ...nonDefaultTags]
+                tags: nonDefaultTags
             }) + `\n${aiContent}`;
 
             // 폴더 생성
