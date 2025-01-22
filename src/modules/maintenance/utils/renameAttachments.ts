@@ -1,4 +1,5 @@
 import { App, Notice, TFile } from 'obsidian';
+import { PathSettings } from '../settings/pathSettings';
 
 export class RenameAttachments {
     private app: App;
@@ -42,8 +43,8 @@ export class RenameAttachments {
                 const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentName);
 
                 if (attachmentFile instanceof TFile) {
-                    // 현재 노트 이름 + 인덱스로 새 파일명 생성
-                    const newFileName = `${currentFile.basename}-${i + 1}.${extension}`;
+                    // 첨부파일 이름 생성 로직 개선
+                    const newFileName = `${currentFile.basename}-${i + 1}${extension ? `.${extension}` : PathSettings.DEFAULT_FILE_EXTENSION}`;
                     // 새 파일의 절대 경로 생성
                     const newPath = currentDir ? `${currentDir}/${newFileName}` : newFileName;
                     // 절대 경로를 포함한 새 임베드 생성
