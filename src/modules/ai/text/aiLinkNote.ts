@@ -2,7 +2,7 @@ import { App, Notice, MarkdownView, moment } from 'obsidian';
 import type AILSSPlugin from '../../../../main';
 import { FrontmatterManager } from '../../maintenance/utils/frontmatterManager';
 import { PathSettings } from '../../maintenance/settings/pathSettings';
-import { requestToAI } from '../../maintenance/utils/aiUtils';
+import { requestToAI } from '../ai_utils/aiUtils';
 import { getContentWithoutFrontmatter } from '../../maintenance/utils/contentUtils';
 
 export class AILinkNote {

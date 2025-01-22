@@ -1,6 +1,7 @@
-import { App, Notice, Editor, MarkdownView } from 'obsidian';
+import { App, Notice } from 'obsidian';
 import AILSSPlugin from '../../../../main';
-import { requestToAI } from '../../../modules/maintenance/utils/aiUtils';
+import { AIEditorUtils } from '../ai_utils/aiEditorUtils';
+import { requestToAI } from '../ai_utils/aiUtils';
 
 export class AIVisualizer {
     private app: App;
@@ -14,16 +15,9 @@ export class AIVisualizer {
     async main() {
         try {
             console.log('AIVisualizer main() 시작');
-            const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-            if (!activeView) {
-                console.log('활성화된 마크다운 편집기 없음');
-                new Notice('활성화된 마크다운 편집기가 없습니다.');
-                return;
-            }
-
-            const editor = activeView.editor;
+            const editor = AIEditorUtils.getActiveEditor(this.app);
             const selectedText = editor.getSelection();
-            console.log('선택된 텍스트:', selectedText);
+            
             if (!selectedText) {
                 console.log('선택된 텍스트 없음');
                 new Notice('텍스트를 선택해주세요.');
@@ -171,7 +165,6 @@ ${selectedText}
             });
 
             new Notice('Mermaid 다이어그램 생성 중...');
-
             const response = await requestToAI(this.plugin, {
                 systemPrompt,
                 userPrompt,
@@ -180,24 +173,12 @@ ${selectedText}
             });
 
             console.log('AI 응답 받음');
-            this.insertVisualization(editor, selectedText, response);
+            await AIEditorUtils.insertAfterSelection(editor, response);
             new Notice('Mermaid 다이어그램이 성공적으로 생성되었습니다.');
 
         } catch (error) {
             console.error('다이어그램 생성 중 상세 오류:', error);
             new Notice('다이어그램 생성 중 오류가 발생했습니다.');
         }
-    }
-
-    private insertVisualization(editor: Editor, selectedText: string, visualization: string) {
-        console.log('시각화 결과 삽입 시작');
-        const selections = editor.listSelections();
-        const lastSelection = selections[selections.length - 1];
-        const endPos = lastSelection.head.line > lastSelection.anchor.line ? 
-            lastSelection.head : lastSelection.anchor;
-
-        editor.replaceRange(`\n\n%%\nMermaid 다이어그램 분석:\n${visualization}\n%%\n`, 
-            {line: endPos.line, ch: editor.getLine(endPos.line).length});
-        console.log('시각화 결과 삽입 완료');
     }
 } 

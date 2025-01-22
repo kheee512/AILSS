@@ -1,93 +1,70 @@
-import { App, Editor, Notice, MarkdownView, TFile } from 'obsidian';
+import { App, Notice } from 'obsidian';
 import AILSSPlugin from '../../../../main';
+import { AIImageUtils } from '../ai_utils/aiImageUtils';
+import { AIEditorUtils } from '../ai_utils/aiEditorUtils';
+import { AIBatchProcessor } from '../ai_utils/aiBatchProcessor';
 import Anthropic from '@anthropic-ai/sdk';
 
-export class AIImageInspect {
+export class AIImageAnalysis {
     private app: App;
     private plugin: AILSSPlugin;
-    private activeSelections: Map<string, {
-        processing: boolean
-    }> = new Map();
 
     constructor(app: App, plugin: AILSSPlugin) {
         this.app = app;
         this.plugin = plugin;
     }
 
-    async main(): Promise<void> {
+    async main() {
         try {
-            const editor = this.getActiveEditor();
-            const selectedText = editor.getSelection().trim();
-            const fromLine = editor.getCursor('from').line;
-
-            // 현재 선택에 대한 고유 ID 생성
-            const selectionId = `${fromLine}-${Date.now()}`;
-
-            // 이미 처리 중인 선택인지 확인
-            if (this.isProcessing(fromLine)) {
-                throw new Error("이미 처리 중인 선택입니다.");
-            }
-
-            // 현재 선택을 처리 중으로 표시
-            this.activeSelections.set(selectionId, {
-                processing: true
-            });
-
-            const imageLinks = this.extractImageLinks(selectedText);
-            if (imageLinks.length === 0) {
-                throw new Error("선택된 텍스트에서 이미지를 찾을 수 없습니다.");
-            }
-
-            new Notice('이미지 분석 중...');
+            //console.log('이미지 분석 프로세스 시작');
+            new Notice('이미지 분석 프로세스 시작');
+            const editor = AIEditorUtils.getActiveEditor(this.app);
+            const selectedText = editor.getSelection();
             
-            const analyses = await Promise.all(
-                imageLinks.map(async (link, index) => {
-                    new Notice(`이미지 분석 진행 중... (${index + 1}/${imageLinks.length})`);
+            if (!selectedText) {
+                //console.log('선택된 텍스트 없음');
+                new Notice('이미지를 선택해주세요.');
+                return;
+            }
+
+            const imageLinks = AIImageUtils.extractImageLinks(selectedText);
+            console.log(`발견된 이미지 링크: ${imageLinks.length}개`, imageLinks);
+
+            if (imageLinks.length === 0) {
+                //console.log('이미지 링크를 찾을 수 없음');
+                new Notice('선택된 텍스트에서 이미지를 찾을 수 없습니다.');
+                return;
+            }
+
+            new Notice('이미지 분석을 시작합니다...');
+            
+            const analyses = await AIBatchProcessor.processBatch(
+                imageLinks,
+                async (link, index, total) => {
+                    //console.log(`이미지 분석 시작 (${index + 1}/${total}): ${link}`);
+                    new Notice(`이미지 분석 시작 (${index + 1}/${total}): ${link}`);
                     return await this.analyzeImage(link);
-                })
+                },
+                3,
+                '이미지 분석'
             );
 
-            // AI 분석 결과를 에디터에 삽입
-            const analysisContent = analyses.join('\n\n');
-            editor.replaceSelection(selectedText + '\n\n' + analysisContent);
+            //console.log('모든 이미지 분석 완료, 노트 업데이트 시작');
+            new Notice('분석된 내용을 노트에 추가하는 중...');
+            const updatedSelection = await AIEditorUtils.updateNoteContent(selectedText, analyses);
+            editor.replaceSelection(updatedSelection);
 
-            new Notice("이미지 분석이 완료되었습니다.");
-
-            // 작업 완료 후 선택 정보 업데이트
-            this.activeSelections.set(selectionId, {
-                processing: false
-            });
-
-            // 일정 시간 후 선택 정보 제거
-            setTimeout(() => {
-                this.activeSelections.delete(selectionId);
-            }, 5000);
-
+            //console.log('이미지 분석 프로세스 완료');
+            new Notice('이미지 분석이 완료되었습니다.');
         } catch (error) {
-            this.activeSelections.clear();
-            console.error("오류 발생:", error);
-            new Notice(`오류: ${error instanceof Error ? error.message : String(error)}`);
+            //console.error('이미지 분석 중 오류 발생:', error);
+            new Notice('이미지 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         }
-    }
-
-    private extractImageLinks(content: string): string[] {
-        const imageRegex = /!\[\[([^\]]+\.(png|jpg|jpeg|gif|webp))\]\]/g;
-        const matches = [...content.matchAll(imageRegex)];
-        return matches.map(match => match[1]);
     }
 
     private async analyzeImage(imagePath: string): Promise<string> {
         try {
-            console.log(`이미지 파일 읽기 시작: ${imagePath}`);
-            
-            const imageFile = this.app.vault.getAbstractFileByPath(imagePath);
-            if (!(imageFile instanceof TFile)) {
-                console.error(`이미지 파일을 찾을 수 없음: ${imagePath}`);
-                throw new Error('이미지 파일을 찾을 수 없습니다.');
-            }
-
-            const imageArrayBuffer = await this.app.vault.readBinary(imageFile);
-            const base64Image = this.arrayBufferToBase64(imageArrayBuffer);
+            const { base64Image, mediaType } = await AIImageUtils.processImageForClaude(this.app, imagePath);
 
             const systemPrompt = `당신은 이미지를 분석하고 핵심 내용을 추출하는 전문가입니다.
 
@@ -116,31 +93,16 @@ export class AIImageInspect {
                 dangerouslyAllowBrowser: true
             });
 
-            const mimeTypes = {
-                'jpg': 'image/jpeg' as const,
-                'jpeg': 'image/jpeg' as const,
-                'png': 'image/png' as const,
-                'gif': 'image/gif' as const,
-                'webp': 'image/webp' as const
-            };
-            
-            const mediaType = mimeTypes[imageFile.extension as keyof typeof mimeTypes];
-            if (!mediaType) {
-                throw new Error('지원되지 않는 이미지 형식입니다.');
-            }
-
+            console.log('Claude API 요청 시작');
             const response = await anthropic.messages.create({
                 model: "claude-3-5-sonnet-20241022",
-                max_tokens: 2000,
-                temperature: 0.3,
+                max_tokens: 4000,
+                temperature: 0.25,
                 system: systemPrompt,
                 messages: [{
                     role: "user",
                     content: [
-                        {
-                            type: "text",
-                            text: userPrompt
-                        },
+                        { type: "text", text: userPrompt },
                         {
                             type: "image",
                             source: {
@@ -153,6 +115,27 @@ export class AIImageInspect {
                 }]
             });
 
+            //console.log('Claude API 응답 수신 완료');
+            new Notice('Claude API 응답 수신 완료');
+            
+            const inputTokens = response.usage?.input_tokens ?? 0;
+            const outputTokens = response.usage?.output_tokens ?? 0;
+            const totalTokens = inputTokens + outputTokens;
+            const estimatedCost = (totalTokens / 1000) * 0.015;
+
+            new Notice(`토큰 사용량:
+입력: ${inputTokens}
+출력: ${outputTokens}
+총: ${totalTokens}
+비용: $${estimatedCost.toFixed(4)}`);
+
+            //console.log('토큰 사용량 상세:', {
+            //    입력_토큰: inputTokens,
+            //    출력_토큰: outputTokens,
+            //    총_토큰: totalTokens,
+            //    예상_비용_USD: `$${estimatedCost.toFixed(4)}`
+            //});
+
             if (response.content && response.content[0] && 'text' in response.content[0]) {
                 return response.content[0].text;
             }
@@ -160,40 +143,9 @@ export class AIImageInspect {
             throw new Error('AI 응답을 받지 못했습니다.');
 
         } catch (error: any) {
-            console.error('이미지 분석 오류:', error);
-            return `이미지 분석 중 오류가 발생했습니다: ${error.message}`;
+            //console.error('이미지 분석 상세 오류:', error);
+            new Notice('이미지 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            return '이미지 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
         }
-    }
-
-    private arrayBufferToBase64(buffer: ArrayBuffer): string {
-        let binary = '';
-        const bytes = new Uint8Array(buffer);
-        for (let i = 0; i < bytes.byteLength; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
-        return btoa(binary);
-    }
-
-    private getActiveEditor(): Editor {
-        const activeLeaf = this.app.workspace.activeLeaf;
-        if (!activeLeaf) {
-            throw new Error("활성화된 뷰를 찾을 수 없습니다.");
-        }
-
-        const { view } = activeLeaf;
-        if (!(view instanceof MarkdownView)) {
-            throw new Error("마크다운 편집기를 찾을 수 없습니다.");
-        }
-
-        return view.editor;
-    }
-
-    private isProcessing(line: number): boolean {
-        for (const [_, selection] of this.activeSelections) {
-            if (selection.processing) {
-                return true;
-            }
-        }
-        return false;
     }
 } 

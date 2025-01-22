@@ -8,11 +8,10 @@ import { DeleteLink } from './src/modules/command/delete/deleteLink';
 import { DeleteCurrentNote } from './src/modules/command/delete/deleteCurrentNote';
 import { DeactivateNotes } from './src/modules/command/move/deactivateNotes';
 import { ActivateNotes } from './src/modules/command/move/activateNotes';
-import { GraphManager } from './src/modules/maintenance/graph/graphManager';
+import { GraphManager } from './src/modules/maintenance/utils/graph/graphManager';
 import { AILSSSettings, DEFAULT_SETTINGS, AILSSSettingTab } from './src/modules/maintenance/settings/settings';
-import { AIImageAnalysis } from './src/modules/ai/image/aiOCR';
-import { AIImageInspect } from './src/modules/ai/image/aiImageAnalysis';
-import { AIExamAnalysis } from './src/modules/ai/image/aiExamAnalysis';
+import { AIOCR } from './src/modules/ai/image/aiOCR';
+import { AIImageAnalysis } from './src/modules/ai/image/aiImageAnalysis';
 import { AIAnswer } from './src/modules/ai/text/aiAnswer';
 import { AILinkNote } from './src/modules/ai/text/aiLinkNote';
 import { AILatexMath } from './src/modules/ai/text/aiLatexMath';
@@ -36,9 +35,8 @@ export default class AILSSPlugin extends Plugin {
 	private pendingRename: boolean = false;
 	private renameTimeout: NodeJS.Timeout | null = null;
 	private graphManager: GraphManager;
+	private aiOCR: AIOCR;
 	private aiImageAnalysis: AIImageAnalysis;
-	private aiImageInspect: AIImageInspect;
-	private aiExamAnalysis: AIExamAnalysis;
 	private aiAnswer: AIAnswer;
 	private aiLinkNote: AILinkNote;
 	private aiLatexMath: AILatexMath;
@@ -64,9 +62,8 @@ export default class AILSSPlugin extends Plugin {
 		this.graphManager = new GraphManager(this.app, this);
 
 		// AI 모듈 초기화
+		this.aiOCR = new AIOCR(this.app, this);
 		this.aiImageAnalysis = new AIImageAnalysis(this.app, this);
-		this.aiImageInspect = new AIImageInspect(this.app, this);
-		this.aiExamAnalysis = new AIExamAnalysis(this.app, this);
 		this.aiAnswer = new AIAnswer(this.app, this);
 		this.aiLinkNote = new AILinkNote(this.app, this);
 		this.aiLatexMath = new AILatexMath(this.app, this);
@@ -112,15 +109,11 @@ export default class AILSSPlugin extends Plugin {
 
 		// AI 리본 메뉴 추가
 		this.addRibbonIcon('file-scan', 'OCR 분석', () => {
-			this.aiImageAnalysis.main();
+			this.aiOCR.main();
 		});
 
 		this.addRibbonIcon('image', '이미지 분석', () => {
-			this.aiImageInspect.main();
-		});
-
-		this.addRibbonIcon('book-open', '문제 분석', () => {
-			this.aiExamAnalysis.main();
+			this.aiImageAnalysis.main();
 		});
 
 		this.addRibbonIcon('message-circle-question', 'AI 답변', () => {
@@ -201,19 +194,13 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'ai-ocr-analysis',
 			name: 'OCR 분석',
-			editorCallback: () => this.aiImageAnalysis.main()
+			editorCallback: () => this.aiOCR.main()
 		});
 
 		this.addCommand({
 			id: 'ai-image-analysis',
 			name: '이미지 분석',
-			editorCallback: () => this.aiImageInspect.main()
-		});
-
-		this.addCommand({
-			id: 'ai-exam-analysis',
-			name: '문제 분석',
-			editorCallback: () => this.aiExamAnalysis.main()
+			editorCallback: () => this.aiImageAnalysis.main()
 		});
 
 		this.addCommand({
