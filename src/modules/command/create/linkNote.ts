@@ -52,9 +52,9 @@ export class LinkNote {
             const now = moment();
             const folderPath = PathSettings.getTimestampedPath(now);
 
-            // 프론트매터 생성 (상속받은 태그 포함)
+            // 프론트매터 생성 (상속받은 태그만 포함)
             const noteContent = frontmatterManager.generateFrontmatter({
-                tags: [...FrontmatterManager.DEFAULT_TAGS, ...nonDefaultTags]
+                tags: nonDefaultTags
             });
 
             // 폴더 생성
