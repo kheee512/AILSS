@@ -102,16 +102,29 @@ export class DeleteLink {
         if (type === 'attachment') {
             match = text.match(/!\[\[(.*?)(?:\|.*?)?\]\]/);
             if (match) {
+                // 첨부파일 경로가 이미 완전한 경로인 경우 (예: YY-MM/DD/HH/파일명)
+                const filePath = match[1];
+                if (PathSettings.isValidPath(filePath)) {
+                    return filePath;
+                }
+                // 기존 상대 경로 처리
                 const currentDir = currentPath.substring(0, currentPath.lastIndexOf('/'));
-                return `${currentDir}/${match[1]}`;
+                return `${currentDir}/${filePath}`;
             }
         } else {
             match = text.match(/\[\[(.*?)(?:\|.*?)?\]\]/);
             if (match) {
-                // 노트 경로가 이미 완전한 경로인 경우
-                return match[1].endsWith(PathSettings.DEFAULT_FILE_EXTENSION) 
-                    ? match[1] 
-                    : `${match[1]}${PathSettings.DEFAULT_FILE_EXTENSION}`;
+                const filePath = match[1];
+                // 노트 경로가 이미 완전한 경로인 경우 (예: YY-MM/DD/HH/노트명)
+                if (PathSettings.isValidPath(filePath)) {
+                    return filePath.endsWith(PathSettings.DEFAULT_FILE_EXTENSION)
+                        ? filePath
+                        : `${filePath}${PathSettings.DEFAULT_FILE_EXTENSION}`;
+                }
+                // 기존 상대 경로 처리
+                return filePath.endsWith(PathSettings.DEFAULT_FILE_EXTENSION)
+                    ? filePath
+                    : `${filePath}${PathSettings.DEFAULT_FILE_EXTENSION}`;
             }
         }
         return null;

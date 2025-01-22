@@ -87,6 +87,10 @@ export default class AILSSPlugin extends Plugin {
 			this.linkNoteManager.createLinkNote();
 		});
 
+		this.addRibbonIcon('delete', '링크 삭제', () => {
+			this.deleteLinkManager.deleteLink();
+		});
+
 		// 리본 메뉴에 연결된 노트 태그 업데이트 아이콘 추가
 		this.addRibbonIcon('tags', '연결된 노트 태그 업데이트', () => {
 			this.updateTagsManager.updateCurrentNoteTags();
@@ -178,7 +182,7 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'delete-link',
 			name: '선택한 링크와 파일 삭제',
-			icon: 'trash',
+			icon: 'delete',
 			editorCallback: () => this.deleteLinkManager.deleteLink()
 		});
 
