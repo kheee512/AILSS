@@ -34,7 +34,7 @@ export default class AILSSPlugin extends Plugin {
 	private deactivateNotesManager: DeactivateNotes;
 	private activateNotesManager: ActivateNotes;
 	private pendingRename: boolean = false;
-	private renameTimeout: NodeJS.Timeout | null = null;
+	private renameTimeout: number | null = null;
 	private graphManager: GraphManager;
 	private aiOCR: AIOCR;
 	private aiImageAnalysis: AIImageAnalysis;
@@ -293,11 +293,11 @@ export default class AILSSPlugin extends Plugin {
 				
 				// 이미 대기 중인 이름 변경 작업이 있다면 취소
 				if (this.renameTimeout) {
-					clearTimeout(this.renameTimeout);
+					window.clearTimeout(this.renameTimeout);
 				}
 				
 				// 새로운 이름 변경 작업 예약
-				this.renameTimeout = setTimeout(async () => {
+				this.renameTimeout = window.setTimeout(async () => {
 					if (!this.pendingRename) {
 						this.pendingRename = true;
 						try {
@@ -317,7 +317,7 @@ export default class AILSSPlugin extends Plugin {
 
 	onunload() {
 		if (this.renameTimeout) {
-			clearTimeout(this.renameTimeout);
+			window.clearTimeout(this.renameTimeout);
 		}
 	}
 
