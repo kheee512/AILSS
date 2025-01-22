@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import AILSSPlugin from '../../../../main';
 import { FileCountManager } from '../utils/fileCountManager';
+import { PathSettings } from './pathSettings';
 
 export interface AILSSSettings {
     openAIAPIKey: string;
@@ -54,7 +55,7 @@ export class AILSSSettingTab extends PluginSettingTab {
         // 통계 정보 표시
         new Setting(containerEl)
             .setName('전체 노트 수')
-            .setDesc('노트 개수는 최대 1000개로 제한됩니다.')
+            .setDesc(`노트 개수는 최대 ${PathSettings.MAX_NOTES}개로 제한됩니다`)
             .addText(text => text
                 .setValue(String(noteCount))
                 .setDisabled(true));

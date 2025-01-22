@@ -13,7 +13,7 @@ export class FrontmatterManager {
     private static readonly INITIAL_POTENTIATION = 0;
     private static readonly MAX_POTENTIATION = 100;
     private static readonly POTENTIATION_INCREMENT = 1;
-    private static readonly POTENTIATION_DELAY_MINUTES = 5;
+    private static readonly POTENTIATION_DELAY_MINUTES = 10;
 
     constructor() {}
 
