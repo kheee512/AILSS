@@ -16,37 +16,37 @@ export class DeleteLink {
     }
 
     async deleteLink() {
-        const activeFile = this.app.workspace.getActiveFile();
-        if (!activeFile) {
-            new Notice('활성화된 노트가 없습니다.');
-            return;
-        }
-
-        const editor = this.app.workspace.activeEditor?.editor;
-        if (!editor) {
-            new Notice('에디터를 찾을 수 없습니다.');
-            return;
-        }
-
-        const selectedText = editor.getSelection();
-        if (!selectedText) {
-            new Notice('텍스트가 선택되지 않았습니다.');
-            return;
-        }
-
-        const linkType = this.identifyLinkType(selectedText);
-        if (!linkType) {
-            new Notice('선택된 텍스트에서 유효한 링크를 찾을 수 없습니다.');
-            return;
-        }
-
-        const filePath = this.extractFilePath(selectedText, linkType, activeFile.path);
-        if (!filePath) {
-            new Notice('파일 경로를 추출할 수 없습니다.');
-            return;
-        }
-
         try {
+            const activeFile = this.app.workspace.getActiveFile();
+            if (!activeFile) {
+                new Notice('활성화된 노트가 없습니다.');
+                return;
+            }
+
+            const editor = this.app.workspace.activeEditor?.editor;
+            if (!editor) {
+                new Notice('에디터를 찾을 수 없습니다.');
+                return;
+            }
+
+            const selectedText = editor.getSelection();
+            if (!selectedText) {
+                new Notice('텍스트가 선택되지 않았습니다.');
+                return;
+            }
+
+            const linkType = this.identifyLinkType(selectedText);
+            if (!linkType) {
+                new Notice('선택된 텍스트에서 유효한 링크를 찾을 수 없습니다.');
+                return;
+            }
+
+            const filePath = this.extractFilePath(selectedText, linkType, activeFile.path);
+            if (!filePath) {
+                new Notice('파일 경로를 추출할 수 없습니다.');
+                return;
+            }
+
             const fileToDelete = this.app.vault.getAbstractFileByPath(filePath);
             if (fileToDelete instanceof TFile) {
                 const confirmed = await showConfirmationDialog(this.app, {
@@ -61,7 +61,14 @@ export class DeleteLink {
                     return;
                 }
 
-                await this.app.vault.trash(fileToDelete, true);
+                try {
+                    await this.app.vault.delete(fileToDelete);
+                } catch (deleteError) {
+                    //console.log('일반 삭제 실패, trash로 시도:', deleteError);
+                    new Notice('파일 삭제에 실패했습니다. 오류: ' + deleteError.message);
+                    new Notice('trash로 시도합니다.');
+                    await this.app.vault.trash(fileToDelete, false);
+                }
                 
                 if (linkType === 'attachment') {
                     editor.replaceSelection('');
@@ -87,7 +94,7 @@ export class DeleteLink {
             }
         } catch (error) {
             console.error('파일 삭제 중 오류 발생:', error);
-            new Notice('파일 삭제에 실패했습니다.');
+            new Notice('파일 삭제에 실패했습니다. 오류: ' + error.message);
         }
     }
 
