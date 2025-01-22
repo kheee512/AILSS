@@ -83,6 +83,8 @@ export class AILSSSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
+        containerEl.createEl('hr');
+
         this.addMaskedApiKeySetting(containerEl, 'OpenAI API Key', 'openAIAPIKey');
         
         new Setting(containerEl)
