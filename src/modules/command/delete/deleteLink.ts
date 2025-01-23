@@ -43,25 +43,29 @@ export class DeleteLink {
             }
 
             // 삭제할 파일 정보 수집
-            const filesToDelete: Array<{file: TFile, type: 'note' | 'attachment', originalText: string}> = [];
+            const filesToDelete: Array<{file: TFile | null, type: 'note' | 'attachment', originalText: string}> = [];
             for (const link of links) {
                 const filePath = this.extractFilePath(link.text, link.type, activeFile.path);
                 if (filePath) {
                     const file = this.app.vault.getAbstractFileByPath(filePath);
-                    if (file instanceof TFile) {
-                        filesToDelete.push({file, type: link.type, originalText: link.text});
-                    }
+                    // 파일이 존재하지 않는 경우에도 링크 정보 추가
+                    filesToDelete.push({
+                        file: file instanceof TFile ? file : null,
+                        type: link.type, 
+                        originalText: link.text
+                    });
                 }
             }
 
             if (filesToDelete.length > 0) {
-                const message = filesToDelete.length === 1 
-                    ? `"${filesToDelete[0].file.basename}"${filesToDelete[0].type === 'attachment' ? ' 첨부파일' : ' 노트'}을(를) 삭제하시겠습니까?`
-                    : `${filesToDelete.length}개의 파일을 삭제하시겠습니까?\n\n${filesToDelete.map(f => `- ${f.file.basename}`).join('\n')}`;
+                const existingFiles = filesToDelete.filter(f => f.file !== null);
+                const confirmMessage = existingFiles.length > 0
+                    ? `${existingFiles.length}개의 파일을 삭제하고 모든 링크를 처리하시겠습니까?\n\n${existingFiles.map(f => `- ${f.file?.basename}`).join('\n')}`
+                    : "선택된 모든 링크를 텍스트로 변환하시겠습니까?";
 
                 const confirmed = await showConfirmationDialog(this.app, {
                     title: "링크 삭제 확인",
-                    message,
+                    message: confirmMessage,
                     confirmText: "삭제",
                     cancelText: "취소"
                 });
@@ -74,14 +78,17 @@ export class DeleteLink {
                 // 파일 삭제 및 링크 텍스트 처리
                 let modifiedText = selectedText;
                 for (const {file, type, originalText} of filesToDelete) {
-                    try {
-                        await this.app.vault.delete(file);
-                    } catch (deleteError) {
-                        new Notice(`${file.basename} 삭제 실패. trash로 시도합니다.`);
-                        await this.app.vault.trash(file, false);
+                    // 파일이 존재하는 경우에만 삭제 시도
+                    if (file) {
+                        try {
+                            await this.app.vault.delete(file);
+                        } catch (deleteError) {
+                            new Notice(`${file.basename} 삭제 실패. trash로 시도합니다.`);
+                            await this.app.vault.trash(file, false);
+                        }
                     }
 
-                    // 링크 텍스트 처리
+                    // 링크 텍스트 처리 (파일 존재 여부와 관계없이)
                     if (type === 'attachment') {
                         modifiedText = modifiedText.replace(originalText, '');
                     } else {
@@ -97,7 +104,10 @@ export class DeleteLink {
                 }
 
                 editor.replaceSelection(modifiedText);
-                new Notice(`${filesToDelete.length}개의 파일이 삭제되었습니다.`);
+                const message = existingFiles.length > 0
+                    ? `${existingFiles.length}개의 파일이 삭제되고 모든 링크가 처리되었습니다.`
+                    : "모든 링크가 텍스트로 변환되었습니다.";
+                new Notice(message);
                 await this.cleanEmptyFolders.cleanEmptyFoldersInVault();
             } else {
                 new Notice('삭제할 파일을 찾을 수 없습니다.');
