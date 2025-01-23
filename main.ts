@@ -18,6 +18,7 @@ import { AIVisualizer } from './src/modules/ai/text/aiVisualizer';
 import { FileCountManager } from './src/modules/maintenance/utils/fileCountManager';
 import { AIStructureNote } from './src/modules/ai/text/aiStructureNote';
 import { UpdateAttachments } from './src/modules/command/update/updateAttachments';
+import { IntegrityCheck } from './src/modules/maintenance/utils/integrityCheck';
 
 
 
@@ -45,6 +46,7 @@ export default class AILSSPlugin extends Plugin {
 	private fileCountManager: FileCountManager;
 	private aiStructureNote: AIStructureNote;
 	private updateAttachmentsManager: UpdateAttachments;
+	private integrityCheck: IntegrityCheck;
 
 	async onload() {
 		await this.loadSettings();
@@ -80,6 +82,9 @@ export default class AILSSPlugin extends Plugin {
 
 		// UpdateAttachments 초기화
 		this.updateAttachmentsManager = new UpdateAttachments(this.app, this);
+
+		// IntegrityCheck 초기화
+		this.integrityCheck = new IntegrityCheck(this.app, this);
 
 		// 리본 메뉴에 새 노트 생성 아이콘 추가
 		this.addRibbonIcon('file-plus', '새 노트 생성', () => {
@@ -152,6 +157,11 @@ export default class AILSSPlugin extends Plugin {
 		// 리본 메뉴에 첨부 파일 이름 변경 아이콘 추가
 		this.addRibbonIcon('paperclip', '첨부 파일 이름 변경', () => {
 			this.updateAttachmentsManager.updateAttachments();
+		});
+
+		// 리본 메뉴에 무결성 검사 아이콘 추가
+		this.addRibbonIcon('check-circle', '무결성 검사', () => {
+			this.integrityCheck.checkIntegrity();
 		});
 
 		// 새 노트 생성 명령어 추가
@@ -274,6 +284,14 @@ export default class AILSSPlugin extends Plugin {
 			name: '첨부 파일 이름 변경',
 			icon: 'paperclip',
 			callback: () => this.updateAttachmentsManager.updateAttachments()
+		});
+
+		// 무결성 검사 명령어 추가
+		this.addCommand({
+			id: 'check-integrity',
+			name: '무결성 검사',
+			icon: 'check-circle',
+			callback: () => this.integrityCheck.checkIntegrity()
 		});
 	}
 
