@@ -34,7 +34,7 @@ export class AIEditorUtils {
         for (const match of matches) {
             result += content.slice(lastIndex, match.index);
             result += match[0];
-            result += '\n# analysis\n' + analyses[analysisIndex] + '\n';
+            result += '\n#\ analysis\n' + analyses[analysisIndex] + '\n';
             
             lastIndex = match.index! + match[0].length;
             analysisIndex++;
