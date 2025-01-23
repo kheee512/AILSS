@@ -20,6 +20,7 @@ import { AIStructureNote } from './src/modules/ai/text/aiStructureNote';
 import { UpdateAttachments } from './src/modules/command/update/updateAttachments';
 import { IntegrityCheck } from './src/modules/maintenance/utils/integrityCheck';
 import { CreateDummy } from './src/modules/maintenance/utils/dev/createDummy';
+import { EmbedNote } from './src/modules/command/create/embedNote';
 
 
 
@@ -49,6 +50,7 @@ export default class AILSSPlugin extends Plugin {
 	private updateAttachmentsManager: UpdateAttachments;
 	private integrityCheck: IntegrityCheck;
 	private createDummyManager: CreateDummy;
+	private embedNoteManager: EmbedNote;
 
 	async onload() {
 		await this.loadSettings();
@@ -90,6 +92,9 @@ export default class AILSSPlugin extends Plugin {
 
 		// CreateDummy 초기화
 		this.createDummyManager = new CreateDummy(this.app, this);
+
+		// EmbedNote 초기화
+		this.embedNoteManager = new EmbedNote(this.app, this);
 
 		// 리본 메뉴에 새 노트 생성 아이콘 추가
 		this.addRibbonIcon('file-plus', '새 노트 생성', () => {
@@ -172,6 +177,11 @@ export default class AILSSPlugin extends Plugin {
 		// 리본 메뉴에 더미 노트 생성 아이콘 추가
 		this.addRibbonIcon('file-cog', '더미 노트 생성', () => {
 			this.createDummyManager.createDummyNotes();
+		});
+
+		// 리본 메뉴에 임베드 노트 생성 아이콘 추가
+		this.addRibbonIcon('notepad-text-dashed', '선택한 텍스트로 임베드 노트 생성', () => {
+			this.embedNoteManager.createEmbedNote();
 		});
 
 		// 새 노트 생성 명령어 추가
@@ -310,6 +320,14 @@ export default class AILSSPlugin extends Plugin {
 			name: '더미 노트 생성',
 			icon: 'file-cog',
 			callback: () => this.createDummyManager.createDummyNotes()
+		});
+
+		// 임베드 노트 생성 명령어 추가
+		this.addCommand({
+			id: 'create-embed-note',
+			name: '선택한 텍스트로 임베드 노트 생성',
+			icon: 'notepad-text-dashed',
+			editorCallback: () => this.embedNoteManager.createEmbedNote()
 		});
 	}
 

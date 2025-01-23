@@ -44,14 +44,36 @@ export class DeleteLink {
 
             // 삭제할 파일 정보 수집
             const filesToDelete: Array<{file: TFile | null, type: 'note' | 'attachment', originalText: string}> = [];
+            
             for (const link of links) {
-                const filePath = this.extractFilePath(link.text, link.type, activeFile.path);
+                //console.log('처리 중인 링크:', link);
+
+                let filePath = '';
+                if (link.type === 'note') {
+                    const match = link.text.match(/\[\[([^|]+)\|/);
+                    if (match) {
+                        filePath = match[1].trim();
+                        if (!filePath.endsWith('.md')) {
+                            filePath += '.md';
+                        }
+                    }
+                } else {
+                    const match = link.text.match(/!\[\[(.*?)\]\]/);
+                    if (match) {
+                        filePath = match[1].trim();
+                    }
+                }
+
+                //console.log('추출된 파일 경로:', filePath);
+
                 if (filePath) {
                     const file = this.app.vault.getAbstractFileByPath(filePath);
-                    // 파일이 존재하지 않는 경우에도 링크 정보 추가
+                    //console.log('찾은 파일 객체:', file);
+
+                    // 파일이 있든 없든 filesToDelete 배열에 추가
                     filesToDelete.push({
                         file: file instanceof TFile ? file : null,
-                        type: link.type, 
+                        type: link.type,
                         originalText: link.text
                     });
                 }
@@ -59,8 +81,10 @@ export class DeleteLink {
 
             if (filesToDelete.length > 0) {
                 const existingFiles = filesToDelete.filter(f => f.file !== null);
+                //console.log('삭제할 파일 목록:', existingFiles.map(f => f.file?.path));
+
                 const confirmMessage = existingFiles.length > 0
-                    ? `${existingFiles.length}개의 파일을 삭제하고 모든 링크를 처리하시겠습니까?\n\n${existingFiles.map(f => `- ${f.file?.basename}`).join('\n')}`
+                    ? `${existingFiles.length}개의 파일을 삭제하고 모든 링크를 처리하시겠습니까?\n\n${existingFiles.map(f => `- ${f.file?.path}`).join('\n')}`
                     : "선택된 모든 링크를 텍스트로 변환하시겠습니까?";
 
                 const confirmed = await showConfirmationDialog(this.app, {
@@ -78,32 +102,43 @@ export class DeleteLink {
                 // 파일 삭제 및 링크 텍스트 처리
                 let modifiedText = selectedText;
                 for (const {file, type, originalText} of filesToDelete) {
-                    // 파일이 존재하는 경우에만 삭제 시도
+                    let fileDeleted = false;
+
                     if (file) {
                         try {
+                            //console.log('파일 삭제 시도:', file.path);
                             await this.app.vault.delete(file);
-                        } catch (deleteError) {
-                            new Notice(`${file.basename} 삭제 실패. trash로 시도합니다.`);
-                            await this.app.vault.trash(file, false);
+                            //console.log('파일 삭제 성공:', file.path);
+                            fileDeleted = true;
+                        } catch (error) {
+                            //console.error('파일 삭제 실패:', error);
+                            try {
+                                await this.app.vault.trash(file, false);
+                                //console.log('파일 휴지통으로 이동:', file.path);
+                                fileDeleted = true;
+                            } catch (trashError) {
+                                //console.error('휴지통으로 이동 실패:', trashError);
+                                new Notice(`${file.path} 삭제 실패`);
+                                continue;
+                            }
                         }
                     }
 
-                    // 링크 텍스트 처리 (파일 존재 여부와 관계없이)
-                    if (type === 'attachment') {
-                        modifiedText = modifiedText.replace(originalText, '');
-                    } else {
-                        const titleMatch = originalText.match(/\[\[(.*?)(?:\|.*?)?\]\]/);
-                        if (titleMatch) {
-                            const fullPath = titleMatch[1];
-                            const replacement = fullPath.includes('|') 
-                                ? fullPath.split('|')[1]
-                                : fullPath.split('/').pop()?.replace(/\.md$/, '') || '';
-                            modifiedText = modifiedText.replace(originalText, replacement);
+                    if (!file || fileDeleted) {
+                        if (type === 'attachment') {
+                            modifiedText = modifiedText.replace(originalText, '');
+                        } else {
+                            const linkMatch = originalText.match(/\[\[.*?\|(.*?)\]\]/);
+                            if (linkMatch) {
+                                const alias = linkMatch[1];
+                                modifiedText = modifiedText.replace(originalText, alias);
+                            }
                         }
                     }
                 }
 
                 editor.replaceSelection(modifiedText);
+                
                 const message = existingFiles.length > 0
                     ? `${existingFiles.length}개의 파일이 삭제되고 모든 링크가 처리되었습니다.`
                     : "모든 링크가 텍스트로 변환되었습니다.";
@@ -113,27 +148,25 @@ export class DeleteLink {
                 new Notice('삭제할 파일을 찾을 수 없습니다.');
             }
         } catch (error) {
-            console.error('파일 삭제 중 오류 발생:', error);
-            new Notice('파일 삭제에 실패했습니다. 오류: ' + error.message);
+            //console.error('전체 작업 실패:', error);
+            new Notice('작업 실패: ' + error.message);
         }
     }
 
     private findAllLinks(text: string): Array<{text: string, type: 'note' | 'attachment'}> {
         const links: Array<{text: string, type: 'note' | 'attachment'}> = [];
         
-        // 첨부파일 링크 찾기 (이미지)
-        const attachmentRegex = /!\[\[.*?\]\]/g;
+        // 모든 링크를 찾습니다
+        const regex = /!?\[\[.*?\]\]/g;
         let match;
-        while ((match = attachmentRegex.exec(text)) !== null) {
-            links.push({text: match[0], type: 'attachment'});
-        }
-
-        // 노트 링크 찾기
-        const noteRegex = /\[\[.*?\]\]/g;
-        while ((match = noteRegex.exec(text)) !== null) {
-            // 이미지 링크가 아닌 경우만 추가
-            if (!text.slice(Math.max(0, match.index - 1), match.index).endsWith('!')) {
-                links.push({text: match[0], type: 'note'});
+        
+        while ((match = regex.exec(text)) !== null) {
+            const linkText = match[0];
+            // 파이프가 있으면 노트, 없으면 첨부파일
+            if (linkText.includes('|')) {
+                links.push({text: linkText, type: 'note'});
+            } else {
+                links.push({text: linkText, type: 'attachment'});
             }
         }
 
@@ -149,31 +182,25 @@ export class DeleteLink {
     private extractFilePath(text: string, type: 'note' | 'attachment', currentPath: string): string | null {
         let match;
         if (type === 'attachment') {
-            match = text.match(/!\[\[(.*?)(?:\|.*?)?\]\]/);
+            match = text.match(/!\[\[(.*?)\]\]/);
             if (match) {
-                // 첨부파일 경로가 이미 완전한 경로인 경우 (예: YY-MM/DD/HH/파일명)
                 const filePath = match[1];
                 if (PathSettings.isValidPath(filePath)) {
                     return filePath;
                 }
-                // 기존 상대 경로 처리
                 const currentDir = currentPath.substring(0, currentPath.lastIndexOf('/'));
                 return `${currentDir}/${filePath}`;
             }
         } else {
-            match = text.match(/\[\[(.*?)(?:\|.*?)?\]\]/);
+            // 노트 링크에서 파일 경로 추출 (파이프 기호 앞의 부분)
+            match = text.match(/\[\[([^|]+)\|/);
             if (match) {
-                const filePath = match[1];
-                // 노트 경로가 이미 완전한 경로인 경우 (예: YY-MM/DD/HH/노트명)
-                if (PathSettings.isValidPath(filePath)) {
-                    return filePath.endsWith(PathSettings.DEFAULT_FILE_EXTENSION)
-                        ? filePath
-                        : `${filePath}${PathSettings.DEFAULT_FILE_EXTENSION}`;
+                let filePath = match[1].trim();
+                // 파일 확장자가 없는 경우에만 추가
+                if (!filePath.endsWith('.md')) {
+                    filePath += '.md';
                 }
-                // 기존 상대 경로 처리
-                return filePath.endsWith(PathSettings.DEFAULT_FILE_EXTENSION)
-                    ? filePath
-                    : `${filePath}${PathSettings.DEFAULT_FILE_EXTENSION}`;
+                return filePath;
             }
         }
         return null;
