@@ -55,7 +55,7 @@ export class LinkNote {
             // 프론트매터 생성 (상속받은 태그만 포함)
             const noteContent = frontmatterManager.generateFrontmatter({
                 tags: nonDefaultTags
-            });
+            }) + `\n- ${selectedText}`;
 
             // 파일명으로 선택된 텍스트 사용
             const fileName = `${selectedText}${PathSettings.DEFAULT_FILE_EXTENSION}`;

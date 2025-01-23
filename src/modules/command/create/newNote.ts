@@ -3,6 +3,7 @@ import { moment } from 'obsidian';
 import type AILSSPlugin from 'main';
 import { FrontmatterManager } from '../../maintenance/utils/frontmatterManager';
 import { PathSettings } from '../../maintenance/settings/pathSettings';
+import { MarkdownView } from 'obsidian';
 
 export class NewNote {
     constructor(
@@ -23,7 +24,7 @@ export class NewNote {
         const folderPath = PathSettings.getTimestampedPath(now);
 
         const frontmatterManager = new FrontmatterManager();
-        const noteContent = frontmatterManager.generateFrontmatter({}, false);
+        const noteContent = frontmatterManager.generateFrontmatter({}, false) + '\n- ';
 
         try {
             // 폴더가 존재하지 않을 때만 생성
@@ -49,6 +50,14 @@ export class NewNote {
             // 항상 새 탭에서 파일 열기
             const leaf = this.app.workspace.getLeaf('tab');
             await leaf.openFile(newFile);
+            
+            // 커서를 불렛포인트 뒤로 이동
+            const view = leaf.view as MarkdownView;
+            if (view.editor) {
+                const lastLine = view.editor.lastLine();
+                const lineLength = view.editor.getLine(lastLine).length;
+                view.editor.setCursor({ line: lastLine, ch: lineLength });
+            }
             
             new Notice(`새 노트가 생성되었습니다`);
             return newFile;
