@@ -80,8 +80,8 @@ export class ActivateNotes {
                 }
             }
 
-            // 빈 폴더 정리
-            await this.cleanEmptyFolders.cleanEmptyFoldersInVault();
+            // 빈 폴더 정리 - deactivated 폴더만 처리
+            await this.cleanDeactivatedEmptyFolders();
 
             new Notice("모든 노트가 활성화되었습니다.");
 
@@ -142,6 +142,34 @@ export class ActivateNotes {
     private async createFolderIfNotExists(path: string): Promise<void> {
         if (!(await this.app.vault.adapter.exists(path))) {
             await this.app.vault.createFolder(path);
+        }
+    }
+
+    private async cleanDeactivatedEmptyFolders(): Promise<void> {
+        const rootFolder = this.app.vault.getAbstractFileByPath(ActivateNotes.DEACTIVATED_ROOT);
+        if (!(rootFolder instanceof TFolder)) {
+            return;
+        }
+
+        const processFolder = async (currentFolder: TFolder): Promise<boolean> => {
+            for (const child of [...currentFolder.children]) {
+                if (child instanceof TFolder) {
+                    const isEmpty = await processFolder(child);
+                    if (isEmpty) {
+                        await this.app.vault.delete(child);
+                    }
+                } else if (child instanceof TFile) {
+                    // 파일이 있으면 폴더가 비어있지 않음
+                    return false;
+                }
+            }
+            // 모든 하위 항목 처리 후 현재 폴더의 children을 다시 확인
+            return currentFolder.children.length === 0;
+        };
+
+        const isRootEmpty = await processFolder(rootFolder);
+        if (isRootEmpty) {
+            await this.app.vault.delete(rootFolder);
         }
     }
 }
