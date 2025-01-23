@@ -11,6 +11,7 @@ import { GraphManager } from './src/modules/maintenance/utils/graph/graphManager
 import { AILSSSettings, DEFAULT_SETTINGS, AILSSSettingTab } from './src/modules/maintenance/settings/settings';
 import { AIOCR } from './src/modules/ai/image/aiOCR';
 import { AIImageAnalysis } from './src/modules/ai/image/aiImageAnalysis';
+import { AIImageAnalyzer } from './src/modules/ai/image/aiImageAnalyzer';
 import { AIAnswer } from './src/modules/ai/text/aiAnswer';
 import { AILinkNote } from './src/modules/ai/text/aiLinkNote';
 import { AILatexMath } from './src/modules/ai/text/aiLatexMath';
@@ -37,6 +38,7 @@ export default class AILSSPlugin extends Plugin {
 	private graphManager: GraphManager;
 	private aiOCR: AIOCR;
 	private aiImageAnalysis: AIImageAnalysis;
+	private aiImageAnalyzer: AIImageAnalyzer;
 	private aiAnswer: AIAnswer;
 	private aiLinkNote: AILinkNote;
 	private aiLatexMath: AILatexMath;
@@ -65,6 +67,7 @@ export default class AILSSPlugin extends Plugin {
 		// AI 모듈 초기화
 		this.aiOCR = new AIOCR(this.app, this);
 		this.aiImageAnalysis = new AIImageAnalysis(this.app, this);
+		this.aiImageAnalyzer = new AIImageAnalyzer(this.app, this);
 		this.aiAnswer = new AIAnswer(this.app, this);
 		this.aiLinkNote = new AILinkNote(this.app, this);
 		this.aiLatexMath = new AILatexMath(this.app, this);
@@ -122,6 +125,10 @@ export default class AILSSPlugin extends Plugin {
 
 		this.addRibbonIcon('image', '이미지 분석', () => {
 			this.aiImageAnalysis.main();
+		});
+
+		this.addRibbonIcon('image-plus', '이미지 분석기', () => {
+			this.aiImageAnalyzer.main();
 		});
 
 		this.addRibbonIcon('message-circle-question', 'AI 답변', () => {
@@ -222,6 +229,13 @@ export default class AILSSPlugin extends Plugin {
 			name: '이미지 분석',
 			icon: 'image',
 			editorCallback: () => this.aiImageAnalysis.main()
+		});
+
+		this.addCommand({
+			id: 'ai-image-analyzer',
+			name: '이미지 분석기',
+			icon: 'image-plus',
+			editorCallback: () => this.aiImageAnalyzer.main()
 		});
 
 		this.addCommand({
