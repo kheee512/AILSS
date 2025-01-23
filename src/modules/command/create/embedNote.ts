@@ -100,7 +100,7 @@ export class EmbedNote {
             // 선택된 텍스트를 임베드 링크로 변경
             const originalIndent = firstLine.match(/^\s*/)?.[0] ?? '';
             editor.replaceRange(
-                `${originalIndent}- ![[${folderPath}/${fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '')}|${firstLineContent}]]\n`,
+                `${originalIndent}![[${folderPath}/${fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '')}|${firstLineContent}]]\n`,
                 { line: cursor.line, ch: 0 },
                 { line: lines.length + cursor.line, ch: 0 }
             );

@@ -240,30 +240,43 @@ export class IntegrityCheck {
         content += `- 검사 경로: ${report.checkedPath}\n\n`;
 
         content += `## 검사 통계\n`;
-        content += `- 검사한 폴더 수: ${report.statistics.folderCount}개\n`;
-        content += `- 검사한 전체 파일 수: ${report.statistics.fileCount}개\n`;
-        content += `- 노트 파일 수: ${report.statistics.noteCount}개\n`;
-        content += `- 첨부 파일 수: ${report.statistics.attachmentCount}개\n\n`;
+        content += `- 검사한 폴더 수: **${report.statistics.folderCount}**개\n`;
+        content += `- 검사한 전체 파일 수: **${report.statistics.fileCount}**개\n`;
+        content += `- 노트 파일 수: **${report.statistics.noteCount}**개\n`;
+        content += `- 첨부 파일 수: **${report.statistics.attachmentCount}**개\n\n`;
 
-        content += `## 빈 폴더 (${report.emptyFolders.length}개)\n`;
+        content += `## 빈 폴더 (**${report.emptyFolders.length}**개)\n`;
         report.emptyFolders.forEach(path => {
             content += `- ${path}\n`;
         });
 
-        content += `\n## 고아 첨부파일 (${report.orphanedAttachments.length}개)\n`;
+        content += `\n## 고아 첨부파일 (**${report.orphanedAttachments.length}**개)\n`;
         report.orphanedAttachments.forEach(path => {
             content += `- ${path}\n`;
         });
 
-        content += `\n## 잘못된 프론트매터 (${report.invalidFrontmatters.length}개)\n`;
+        content += `\n## 잘못된 프론트매터 (**${report.invalidFrontmatters.length}**개)\n`;
         report.invalidFrontmatters.forEach(path => {
             content += `- ${path}\n`;
         });
 
-        content += `\n## 잘못된 파일명 (${report.invalidFileNames.length}개)\n`;
+        content += `\n## 잘못된 파일명 (**${report.invalidFileNames.length}**개)\n`;
         report.invalidFileNames.forEach(path => {
             content += `- ${path}\n`;
         });
+
+        // 총계 섹션 추가
+        const totalIssues = report.emptyFolders.length + 
+                           report.orphanedAttachments.length + 
+                           report.invalidFrontmatters.length + 
+                           report.invalidFileNames.length;
+
+        content += `\n## 총계\n`;
+        content += `- 전체 문제 수: **${totalIssues}**개\n`;
+        content += `  - 빈 폴더: **${report.emptyFolders.length}**개\n`;
+        content += `  - 고아 첨부파일: **${report.orphanedAttachments.length}**개\n`;
+        content += `  - 잘못된 프론트매터: **${report.invalidFrontmatters.length}**개\n`;
+        content += `  - 잘못된 파일명: **${report.invalidFileNames.length}**개\n`;
 
         const reportFileName = `integrity-check-${moment().format('YYYYMMDD-HHmmss')}.md`;
         await this.app.vault.create(reportFileName, content);

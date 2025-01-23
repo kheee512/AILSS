@@ -21,6 +21,7 @@ import { UpdateAttachments } from './src/modules/command/update/updateAttachment
 import { IntegrityCheck } from './src/modules/maintenance/utils/integrityCheck';
 import { CreateDummy } from './src/modules/maintenance/utils/dev/createDummy';
 import { EmbedNote } from './src/modules/command/create/embedNote';
+import { RecoverNote } from './src/modules/command/create/recoverNote';
 
 
 
@@ -51,6 +52,7 @@ export default class AILSSPlugin extends Plugin {
 	private integrityCheck: IntegrityCheck;
 	private createDummyManager: CreateDummy;
 	private embedNoteManager: EmbedNote;
+	private recoverNoteManager: RecoverNote;
 
 	async onload() {
 		await this.loadSettings();
@@ -95,6 +97,9 @@ export default class AILSSPlugin extends Plugin {
 
 		// EmbedNote 초기화
 		this.embedNoteManager = new EmbedNote(this.app, this);
+
+		// RecoverNote 초기화
+		this.recoverNoteManager = new RecoverNote(this.app, this);
 
 		// 리본 메뉴에 새 노트 생성 아이콘 추가
 		this.addRibbonIcon('file-plus', '새 노트 생성', () => {
@@ -182,6 +187,11 @@ export default class AILSSPlugin extends Plugin {
 		// 리본 메뉴에 임베드 노트 생성 아이콘 추가
 		this.addRibbonIcon('notepad-text-dashed', '선택한 텍스트로 임베드 노트 생성', () => {
 			this.embedNoteManager.createEmbedNote();
+		});
+
+		// 리본 메뉴에 복구 아이콘 추가
+		this.addRibbonIcon('undo', '링크 복구', () => {
+			this.recoverNoteManager.recoverNote();
 		});
 
 		// 새 노트 생성 명령어 추가
@@ -328,6 +338,14 @@ export default class AILSSPlugin extends Plugin {
 			name: '선택한 텍스트로 임베드 노트 생성',
 			icon: 'notepad-text-dashed',
 			editorCallback: () => this.embedNoteManager.createEmbedNote()
+		});
+
+		// 복구 명령어 추가
+		this.addCommand({
+			id: 'recover-note',
+			name: '선택한 링크 복구',
+			icon: 'undo',
+			editorCallback: () => this.recoverNoteManager.recoverNote()
 		});
 	}
 
