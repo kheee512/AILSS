@@ -17,6 +17,7 @@ import { AILatexMath } from './src/modules/ai/text/aiLatexMath';
 import { AIVisualizer } from './src/modules/ai/text/aiVisualizer';
 import { FileCountManager } from './src/modules/maintenance/utils/fileCountManager';
 import { AIStructureNote } from './src/modules/ai/text/aiStructureNote';
+import { UpdateAttachments } from './src/modules/command/update/updateAttachments';
 
 
 
@@ -43,6 +44,7 @@ export default class AILSSPlugin extends Plugin {
 	private aiVisualizer: AIVisualizer;
 	private fileCountManager: FileCountManager;
 	private aiStructureNote: AIStructureNote;
+	private updateAttachmentsManager: UpdateAttachments;
 
 	async onload() {
 		await this.loadSettings();
@@ -75,6 +77,9 @@ export default class AILSSPlugin extends Plugin {
 
 		// AIStructureNote 초기화
 		this.aiStructureNote = new AIStructureNote(this.app, this);
+
+		// UpdateAttachments 초기화
+		this.updateAttachmentsManager = new UpdateAttachments(this.app, this);
 
 		// 리본 메뉴에 새 노트 생성 아이콘 추가
 		this.addRibbonIcon('file-plus', '새 노트 생성', () => {
@@ -144,6 +149,11 @@ export default class AILSSPlugin extends Plugin {
 			this.aiStructureNote.main();
 		});
 
+		// 리본 메뉴에 첨부 파일 이름 변경 아이콘 추가
+		this.addRibbonIcon('paperclip', '첨부 파일 이름 변경', () => {
+			this.updateAttachmentsManager.updateAttachments();
+		});
+
 		// 새 노트 생성 명령어 추가
 		this.addCommand({
 			id: 'create-new-note',
@@ -156,7 +166,7 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'create-link-note',
 			name: '선택한 텍스트로 새 노트 생성',
-			icon: 'link',
+			icon: 'square-arrow-out-up-right',
 			editorCallback: () => this.linkNoteManager.createLinkNote()
 		});
 
@@ -256,6 +266,14 @@ export default class AILSSPlugin extends Plugin {
 			name: '노트 구조화',
 			icon: 'list',
 			editorCallback: () => this.aiStructureNote.main()
+		});
+
+		// 첨부 파일 이름 변경 명령어 추가
+		this.addCommand({
+			id: 'update-attachments',
+			name: '첨부 파일 이름 변경',
+			icon: 'paperclip',
+			callback: () => this.updateAttachmentsManager.updateAttachments()
 		});
 	}
 
