@@ -21,19 +21,20 @@ export class AIEditorUtils {
 
     static async updateNoteContent(content: string, analyses: string[]): Promise<string> {
         console.log('노트 내용 업데이트 시작');
-        const imageRegex = /!\[\[([^/\]]+\.(png|jpg|jpeg|gif|webp))\]\]/g;
+        const imageRegex = /!\[\[([^\]]+\.(png|jpg|jpeg|gif|webp))\]\]/g;
         let lastIndex = 0;
         let result = '';
         let analysisIndex = 0;
 
+        console.log('분석할 내용:', analyses);
+        
         const matches = [...content.matchAll(imageRegex)];
+        console.log('찾은 이미지 매치:', matches);
         
         for (const match of matches) {
             result += content.slice(lastIndex, match.index);
             result += match[0];
-            result += '\n\n';
-            result += analyses[analysisIndex];
-            result += '\n\n';
+            result += '\n# analysis\n' + analyses[analysisIndex] + '\n';
             
             lastIndex = match.index! + match[0].length;
             analysisIndex++;

@@ -1,8 +1,7 @@
-import { MarkdownView, Plugin, TFile } from 'obsidian';
+import { Plugin, TFile } from 'obsidian';
 import { NewNote } from './src/modules/command/create/newNote';
 import { LinkNote } from './src/modules/command/create/linkNote';
 import { UpdateTags } from './src/modules/command/update/updateTags';
-import { RenameAttachments } from './src/modules/maintenance/utils/renameAttachments';
 import { Potentiate } from './src/modules/command/update/potentiate';
 import { DeleteLink } from './src/modules/command/delete/deleteLink';
 import { DeleteCurrentNote } from './src/modules/command/delete/deleteCurrentNote';
@@ -26,7 +25,7 @@ export default class AILSSPlugin extends Plugin {
 	private newNoteManager: NewNote;
 	private linkNoteManager: LinkNote;
 	private updateTagsManager: UpdateTags;
-	private renameAttachmentsManager: RenameAttachments;
+	
 	private potentiateManager: Potentiate;
 	private deleteLinkManager: DeleteLink;
 	private deleteCurrentNoteManager: DeleteCurrentNote;
@@ -52,7 +51,7 @@ export default class AILSSPlugin extends Plugin {
 		this.newNoteManager = new NewNote(this.app, this);
 		this.linkNoteManager = new LinkNote(this.app, this);
 		this.updateTagsManager = new UpdateTags(this.app, this);
-		this.renameAttachmentsManager = new RenameAttachments(this.app);
+		
 		this.potentiateManager = new Potentiate(this.app, this);
 		this.deleteLinkManager = new DeleteLink(this.app, this);
 		this.deleteCurrentNoteManager = new DeleteCurrentNote(this.app, this);
@@ -260,63 +259,6 @@ export default class AILSSPlugin extends Plugin {
 			icon: 'list',
 			editorCallback: () => this.aiStructureNote.main()
 		});
-
-		// 파일 생성 이벤트 리스너 추가
-		this.registerEvent(
-			this.app.vault.on('create', async (file) => {
-				if (!(file instanceof TFile)) return;
-				
-				// 첨부 파일 확장자 체크
-				const attachmentExtensions = [
-					// 이미지
-					'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp',
-					// 문서
-					'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
-					// 오디오
-					'mp3', 'wav', 'ogg', 'm4a',
-					// 비디오
-					'mp4', 'webm', 'mov', 'avi',
-					// 기타
-					'zip', 'rar', '7z',
-					'txt', 'csv', 'json',
-				];
-				
-				const fileExtension = file.extension.toLowerCase();
-				
-				if (!attachmentExtensions.includes(fileExtension)) return;
-				
-				// 현재 활성화된 파일 가져오기
-				const activeFile = this.app.workspace.getActiveFile();
-				if (!activeFile) return;
-				
-				// 현재 파일의 내용 가져오기
-				const content = await this.app.vault.read(activeFile);
-				
-				// 방금 생성된 파일이 현재 문서에 포함되어 있는지 확인
-				const fileNamePattern = new RegExp(`!\\[\\[.*${file.path}.*\\]\\]`);
-				
-				// 이미 대기 중인 이름 변경 작업이 있다면 취소
-				if (this.renameTimeout) {
-					window.clearTimeout(this.renameTimeout);
-				}
-				
-				// 새로운 이름 변경 작업 예약
-				this.renameTimeout = window.setTimeout(async () => {
-					if (!this.pendingRename) {
-						this.pendingRename = true;
-						try {
-							const updatedContent = await this.app.vault.read(activeFile);
-							if (fileNamePattern.test(updatedContent)) {
-								await this.renameAttachmentsManager.renameAttachments();
-							}
-						} finally {
-							this.pendingRename = false;
-							this.renameTimeout = null;
-						}
-					}
-				}, 1500); // 1.5초 딜레이
-			})
-		);
 	}
 
 	onunload() {
