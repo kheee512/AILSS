@@ -61,30 +61,27 @@ export class AILinkNote {
                 return;
             }
 
+            const now = moment();
+            const folderPath = PathSettings.getTimestampedPath(now);
+            const fileName = `${selectedText}${PathSettings.DEFAULT_FILE_EXTENSION}`;
+            
+            // 같은 경로에 동일한 파일명이 있는지 먼저 확인
+            if (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
+                new Notice(`이미 "${selectedText}" 노트가 해당 경로에 존재합니다.`);
+                return;
+            }
+
             // AI 분석 요청
             new Notice("AI 분석 중...");
             const aiContent = await this.generateAIContent(currentContent, selectedText);
 
             // 노트 생성 준비
-            const now = moment();
-            const folderPath = PathSettings.getTimestampedPath(now);
-
-            // 기본 태그를 제외한 태그만 가져오기
             const nonDefaultTags = FrontmatterManager.getNonDefaultTags(currentTags);
 
             // 프론트매터 생성 (기본 태그 제외하고 상속받은 태그만 포함)
             const noteContent = frontmatterManager.generateFrontmatter({
                 tags: nonDefaultTags
             }) + `\n${aiContent}`;
-
-            // 파일명으로 선택된 텍스트 사용
-            const fileName = `${selectedText}${PathSettings.DEFAULT_FILE_EXTENSION}`;
-            
-            // 같은 경로에 동일한 파일명이 있는지 확인
-            if (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
-                new Notice(`이미 "${selectedText}" 노트가 해당 경로에 존재합니다.`);
-                return;
-            }
 
             // 폴더 생성
             if (!(await this.app.vault.adapter.exists(folderPath))) {
