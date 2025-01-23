@@ -3,15 +3,18 @@ import AILSSPlugin from '../../../../main';
 import { AIImageUtils } from '../ai_utils/aiImageUtils';
 import { AIEditorUtils } from '../ai_utils/aiEditorUtils';
 import { AIBatchProcessor } from '../ai_utils/aiBatchProcessor';
+import { AIOCR } from './aiOCR';
 import Anthropic from '@anthropic-ai/sdk';
 
 export class AIImageAnalyzer {
     private app: App;
     private plugin: AILSSPlugin;
+    private ocr: AIOCR;
 
     constructor(app: App, plugin: AILSSPlugin) {
         this.app = app;
         this.plugin = plugin;
+        this.ocr = new AIOCR(app, plugin);
     }
 
     async main() {
@@ -24,13 +27,14 @@ export class AIImageAnalyzer {
             const imageLinks = AIImageUtils.extractImageLinks(selectedText);
             const instruction = selectedText.replace(/!\[\[.*?\]\]/g, '').trim();
 
-            if (!instruction) {
-                new Notice('분석 지시사항을 입력해주세요.');
+            if (imageLinks.length === 0) {
+                new Notice('선택된 텍스트에서 이미지를 찾을 수 없습니다.');
                 return;
             }
 
-            if (imageLinks.length === 0) {
-                new Notice('선택된 텍스트에서 이미지를 찾을 수 없습니다.');
+            // 지시사항이 없는 경우 OCR 모드로 전환
+            if (!instruction) {
+                await this.ocr.main();
                 return;
             }
 

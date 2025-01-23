@@ -9,7 +9,6 @@ import { DeactivateNotes } from './src/modules/command/move/deactivateNotes';
 import { ActivateNotes } from './src/modules/command/move/activateNotes';
 import { GraphManager } from './src/modules/maintenance/utils/graph/graphManager';
 import { AILSSSettings, DEFAULT_SETTINGS, AILSSSettingTab } from './src/modules/maintenance/settings/settings';
-import { AIOCR } from './src/modules/ai/image/aiOCR';
 import { AIImageAnalysis } from './src/modules/ai/image/aiImageAnalysis';
 import { AIImageAnalyzer } from './src/modules/ai/image/aiImageAnalyzer';
 import { AIAnswer } from './src/modules/ai/text/aiAnswer';
@@ -36,7 +35,6 @@ export default class AILSSPlugin extends Plugin {
 	private pendingRename: boolean = false;
 	private renameTimeout: number | null = null;
 	private graphManager: GraphManager;
-	private aiOCR: AIOCR;
 	private aiImageAnalysis: AIImageAnalysis;
 	private aiImageAnalyzer: AIImageAnalyzer;
 	private aiAnswer: AIAnswer;
@@ -65,7 +63,6 @@ export default class AILSSPlugin extends Plugin {
 		this.graphManager = new GraphManager(this.app, this);
 
 		// AI 모듈 초기화
-		this.aiOCR = new AIOCR(this.app, this);
 		this.aiImageAnalysis = new AIImageAnalysis(this.app, this);
 		this.aiImageAnalyzer = new AIImageAnalyzer(this.app, this);
 		this.aiAnswer = new AIAnswer(this.app, this);
@@ -118,12 +115,7 @@ export default class AILSSPlugin extends Plugin {
 			this.activateNotesManager.activateNotes();
 		});
 
-		// AI 리본 메뉴 추가
-		this.addRibbonIcon('file-scan', 'OCR 분석', () => {
-			this.aiOCR.main();
-		});
-
-		this.addRibbonIcon('image', '이미지 분석', () => {
+		this.addRibbonIcon('image', '이미지 자동 분석', () => {
 			this.aiImageAnalysis.main();
 		});
 
@@ -216,17 +208,9 @@ export default class AILSSPlugin extends Plugin {
 			callback: () => this.activateNotesManager.activateNotes()
 		});
 
-		// AI 명령어 추가
-		this.addCommand({
-			id: 'ai-ocr-analysis',
-			name: 'OCR 분석',
-			icon: 'file-scan',
-			editorCallback: () => this.aiOCR.main()
-		});
-
 		this.addCommand({
 			id: 'ai-image-analysis',
-			name: '이미지 분석',
+			name: '이미지 자동 분석',
 			icon: 'image',
 			editorCallback: () => this.aiImageAnalysis.main()
 		});
