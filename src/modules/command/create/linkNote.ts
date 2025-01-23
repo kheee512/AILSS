@@ -57,18 +57,18 @@ export class LinkNote {
                 tags: nonDefaultTags
             });
 
+            // 파일명으로 선택된 텍스트 사용
+            const fileName = `${selectedText}${PathSettings.DEFAULT_FILE_EXTENSION}`;
+            
+            // 같은 경로에 동일한 파일명이 있는지 확인
+            if (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
+                new Notice(`이미 "${selectedText}" 노트가 해당 경로에 존재합니다.`);
+                return;
+            }
+
             // 폴더 생성
             if (!(await this.app.vault.adapter.exists(folderPath))) {
                 await this.app.vault.createFolder(folderPath);
-            }
-
-            // 파일명으로 선택된 텍스트 사용
-            let fileName = `${selectedText}${PathSettings.DEFAULT_FILE_EXTENSION}`;
-            let counter = 1;
-            
-            while (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
-                fileName = `${selectedText}-${counter}${PathSettings.DEFAULT_FILE_EXTENSION}`;
-                counter++;
             }
 
             // 노트 생성
