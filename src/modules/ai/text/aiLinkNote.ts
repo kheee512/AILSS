@@ -27,9 +27,22 @@ export class AILinkNote {
             const editor = activeView.editor;
             const selectedText = editor.getSelection().trim();
             
+            // 현재 선택된 텍스트의 정확한 위치 가져오기
+            const currentSelection = {
+                from: editor.getCursor('from'),
+                to: editor.getCursor('to')
+            };
+            
             if (!selectedText) {
                 throw new Error("선택된 텍스트가 없습니다.");
             }
+
+            // 선택 해제 전에 현재 선택 위치 저장
+            const selectionStart = editor.posToOffset(currentSelection.from);
+            const selectionEnd = editor.posToOffset(currentSelection.to);
+
+            // 선택 해제
+            editor.setSelection(currentSelection.to, currentSelection.to);
 
             const activeFile = this.app.workspace.getActiveFile();
             if (!activeFile) {
@@ -84,8 +97,20 @@ export class AILinkNote {
                 noteContent
             );
 
-            // 선택된 텍스트를 링크로 변경
-            editor.replaceSelection(`[[${folderPath}/${fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '')}|${selectedText}]]`);
+            // 노트 생성 후 정확한 위치에 링크 삽입
+            const fromPos = editor.offsetToPos(selectionStart);
+            const toPos = editor.offsetToPos(selectionEnd);
+            
+            // 현재 해당 위치의 텍스트가 선택했던 텍스트와 일치하는지 확인
+            editor.setSelection(fromPos, toPos);
+            const textAtPosition = editor.getSelection().trim();
+            
+            if (textAtPosition === selectedText) {
+                editor.replaceSelection(`[[${folderPath}/${fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '')}|${selectedText}]]`);
+            } else {
+                new Notice('선택한 텍스트의 위치가 변경되었습니다. 수동으로 링크를 삽입해주세요.');
+                console.log('Original text:', selectedText, 'Text at position:', textAtPosition);
+            }
 
             new Notice(`AI 분석이 포함된 새 노트가 생성되었습니다: ${newFile.path}`);
             return newFile;
