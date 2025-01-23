@@ -19,6 +19,7 @@ import { FileCountManager } from './src/modules/maintenance/utils/fileCountManag
 import { AIStructureNote } from './src/modules/ai/text/aiStructureNote';
 import { UpdateAttachments } from './src/modules/command/update/updateAttachments';
 import { IntegrityCheck } from './src/modules/maintenance/utils/integrityCheck';
+import { CreateDummy } from './src/modules/maintenance/utils/dev/createDummy';
 
 
 
@@ -47,6 +48,7 @@ export default class AILSSPlugin extends Plugin {
 	private aiStructureNote: AIStructureNote;
 	private updateAttachmentsManager: UpdateAttachments;
 	private integrityCheck: IntegrityCheck;
+	private createDummyManager: CreateDummy;
 
 	async onload() {
 		await this.loadSettings();
@@ -85,6 +87,9 @@ export default class AILSSPlugin extends Plugin {
 
 		// IntegrityCheck 초기화
 		this.integrityCheck = new IntegrityCheck(this.app, this);
+
+		// CreateDummy 초기화
+		this.createDummyManager = new CreateDummy(this.app, this);
 
 		// 리본 메뉴에 새 노트 생성 아이콘 추가
 		this.addRibbonIcon('file-plus', '새 노트 생성', () => {
@@ -162,6 +167,11 @@ export default class AILSSPlugin extends Plugin {
 		// 리본 메뉴에 무결성 검사 아이콘 추가
 		this.addRibbonIcon('check-circle', '무결성 검사', () => {
 			this.integrityCheck.checkIntegrity();
+		});
+
+		// 리본 메뉴에 더미 노트 생성 아이콘 추가
+		this.addRibbonIcon('file-cog', '더미 노트 생성', () => {
+			this.createDummyManager.createDummyNotes();
 		});
 
 		// 새 노트 생성 명령어 추가
@@ -292,6 +302,14 @@ export default class AILSSPlugin extends Plugin {
 			name: '무결성 검사',
 			icon: 'check-circle',
 			callback: () => this.integrityCheck.checkIntegrity()
+		});
+
+		// 더미 노트 생성 명령어 추가
+		this.addCommand({
+			id: 'create-dummy-notes',
+			name: '더미 노트 생성',
+			icon: 'file-cog',
+			callback: () => this.createDummyManager.createDummyNotes()
 		});
 	}
 
