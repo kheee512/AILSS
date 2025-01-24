@@ -22,6 +22,7 @@ import { IntegrityCheck } from './src/modules/maintenance/utils/integrityCheck';
 import { CreateDummy } from './src/modules/maintenance/utils/dev/createDummy';
 import { EmbedNote } from './src/modules/command/create/embedNote';
 import { RecoverNote } from './src/modules/command/create/recoverNote';
+import { GlobalGraphManager } from './src/modules/maintenance/utils/graph/global/globalGraphManager';
 
 
 
@@ -53,6 +54,7 @@ export default class AILSSPlugin extends Plugin {
 	private createDummyManager: CreateDummy;
 	private embedNoteManager: EmbedNote;
 	private recoverNoteManager: RecoverNote;
+	private globalGraphManager: GlobalGraphManager;
 
 	async onload() {
 		await this.loadSettings();
@@ -100,6 +102,9 @@ export default class AILSSPlugin extends Plugin {
 
 		// RecoverNote 초기화
 		this.recoverNoteManager = new RecoverNote(this.app, this);
+
+		// GlobalGraphManager 초기화
+		this.globalGraphManager = new GlobalGraphManager(this.app, this);
 
 		// 리본 메뉴에 새 노트 생성 아이콘 추가
 		this.addRibbonIcon('file-plus', '새 노트 생성', () => {
@@ -192,6 +197,10 @@ export default class AILSSPlugin extends Plugin {
 		// 리본 메뉴에 복구 아이콘 추가
 		this.addRibbonIcon('undo', '링크 복구', () => {
 			this.recoverNoteManager.recoverNote();
+		});
+
+		this.addRibbonIcon('refresh-cw', '글로벌 그래프 설정 적용', () => {
+			this.globalGraphManager.applyGlobalGraphConfig();
 		});
 
 		// 새 노트 생성 명령어 추가
@@ -346,6 +355,14 @@ export default class AILSSPlugin extends Plugin {
 			name: '선택한 링크 복구',
 			icon: 'undo',
 			editorCallback: () => this.recoverNoteManager.recoverNote()
+		});
+
+		// 글로벌 그래프 설정 적용 명령어 추가
+		this.addCommand({
+			id: 'apply-global-graph-config',
+			name: '글로벌 그래프 설정 적용',
+			icon: 'refresh-cw',
+			callback: () => this.globalGraphManager.applyGlobalGraphConfig()
 		});
 	}
 
