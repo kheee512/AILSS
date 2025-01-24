@@ -17,7 +17,8 @@ export class PathSettings {
     static readonly DEFAULT_UNTITLED = 'untitled';
     
     // 최대 노트 개수 제한
-    static readonly MAX_NOTES = 10000; 
+    // 성능 테스트 20,000 완료 (2025-01-24)
+    static readonly MAX_NOTES = 20000; 
     
     // 경로 포맷 관련 정규식 수정
     static readonly PATH_REGEX = /^\d{4}\/\d{2}\/\d{2}\/\d{2}00\//;

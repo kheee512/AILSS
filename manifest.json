@@ -1,7 +1,7 @@
 {
   "id": "AILSS-plugin",
   "name": "AILSS",
-  "version": "1.35.01",
+  "version": "1.41.01",
   "minAppVersion": "0.15.0",
   "description": "AILSS plugin for Obsidian",
   "author": "Kyoungho Eom",
