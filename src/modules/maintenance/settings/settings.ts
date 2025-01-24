@@ -20,7 +20,7 @@ export const DEFAULT_SETTINGS: AILSSSettings = {
     selectedAIModel: 'claude',
     openAIModel: 'gpt-4o',
     claudeModel: 'claude-3-5-sonnet-20241022',
-    perplexityModel: 'llama-3.1-sonar-huge-128k-online',
+    perplexityModel: 'sonar-pro',
 };
 
 export class AILSSSettingTab extends PluginSettingTab {
@@ -93,10 +93,13 @@ export class AILSSSettingTab extends PluginSettingTab {
             .setDesc('사용할 OpenAI 모델을 선택하세요')
             .addDropdown(dropdown => dropdown
                 .addOption('gpt-4o', 'GPT-4o')
+                .addOption('gpt-4o-audio-preview', 'GPT-4o Audio')
+                .addOption('gpt-4o-realtime-preview', 'GPT-4o Realtime')
                 .addOption('gpt-4o-mini', 'GPT-4o mini')
-                .addOption('o1-preview', 'o1-preview')
+                .addOption('gpt-4o-mini-audio-preview', 'GPT-4o mini Audio')
+                .addOption('gpt-4o-mini-realtime-preview', 'GPT-4o mini Realtime')
+                .addOption('o1', 'o1')
                 .addOption('o1-mini', 'o1-mini')
-                .addOption('gpt-4-turbo', 'GPT-4 Turbo')
                 .setValue(this.plugin.settings.openAIModel)
                 .onChange(async (value) => {
                     this.plugin.settings.openAIModel = value;
@@ -109,9 +112,6 @@ export class AILSSSettingTab extends PluginSettingTab {
             .setName('Claude 모델')
             .setDesc('사용할 Claude 모델을 선택하세요')
             .addDropdown(dropdown => dropdown
-                .addOption('claude-3-opus-20240229', 'Claude 3 Opus')
-                .addOption('claude-3-sonnet-20240229', 'Claude 3 Sonnet')
-                .addOption('claude-3-haiku-20240307', 'Claude 3 Haiku')
                 .addOption('claude-3-5-sonnet-20241022', 'Claude 3.5 Sonnet')
                 .addOption('claude-3-5-haiku-20241022', 'Claude 3.5 Haiku')
                 .setValue(this.plugin.settings.claudeModel)
@@ -126,9 +126,8 @@ export class AILSSSettingTab extends PluginSettingTab {
             .setName('Perplexity 모델')
             .setDesc('사용할 Perplexity 모델을 선택하세요')
             .addDropdown(dropdown => dropdown
-                .addOption('llama-3.1-sonar-small-128k-online', 'Sonar Small (8B)')
-                .addOption('llama-3.1-sonar-large-128k-online', 'Sonar Large (70B)')
-                .addOption('llama-3.1-sonar-huge-128k-online', 'Sonar Huge (405B)')
+                .addOption('sonar-pro', 'Sonar Pro')
+                .addOption('sonar', 'Sonar')
                 .setValue(this.plugin.settings.perplexityModel)
                 .onChange(async (value) => {
                     this.plugin.settings.perplexityModel = value;
