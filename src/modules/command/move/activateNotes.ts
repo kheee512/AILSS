@@ -109,9 +109,14 @@ export class ActivateNotes {
     }
 
     private async moveNoteToActiveFolder(note: TFile): Promise<void> {
+        // 비활성화된 노트의 경로에서 시간 구조 추출
         const pathParts = note.path.split('/');
-        const [, , year, month, day, hour] = pathParts;
-        const activePath = `${year}/${month}/${day}/${hour}`;
+        const deactivatedIndex = pathParts.indexOf(ActivateNotes.DEACTIVATED_ROOT.split('/')[0]);
+        const timeStructureParts = pathParts.slice(deactivatedIndex + 2); // tag 폴더 이후의 시간 구조
+        const timeStructure = timeStructureParts.slice(0, 4).join('/'); // YYYY/MM/DD/HH00
+        
+        // 원본 시간 구조를 유지하여 활성화 경로 구성
+        const activePath = timeStructure;
         
         // 대상 폴더 생성
         await this.createFolderIfNotExists(activePath);
@@ -134,7 +139,7 @@ export class ActivateNotes {
             }
         }
 
-        // 노트 이동
+        // 노트 이동 (원본 경로 구조 유지)
         const newPath = `${activePath}/${note.name}`;
         await this.app.vault.rename(note, newPath);
     }

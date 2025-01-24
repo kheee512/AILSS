@@ -4,7 +4,6 @@ import { showTagSelectionDialog } from '../../../components/tagSelectionModal';
 import { CleanEmptyFolders } from '../../maintenance/utils/cleanEmptyFolders';
 import type AILSSPlugin from '../../../../main';
 import { PathSettings } from '../../maintenance/settings/pathSettings';
-import { moment } from 'obsidian';
 export class DeactivateNotes {
     private static readonly DEACTIVATED_ROOT = PathSettings.DEACTIVATED_ROOT;
     
@@ -18,7 +17,12 @@ export class DeactivateNotes {
 
     async deactivateNotesByTag(): Promise<void> {
         try {
-            const tags = await this.showTagSelectionModal();
+            const tags = await showTagSelectionDialog(this.app, {
+                title: "비활성화할 태그 선택",
+                placeholder: "태그를 선택하세요",
+                confirmText: "선택",
+                cancelText: "취소"
+            });
             if (!tags || tags.length === 0) {
                 new Notice("태그가 선택되지 않았습니다.");
                 return;
@@ -72,10 +76,14 @@ export class DeactivateNotes {
     }
 
     private async moveNoteToDeactivateFolder(note: TFile, tags: string[]): Promise<void> {
-        const now = new Date();
         const mainTag = tags[0].replace(/^#/, '').replace(/\//g, '-');
-        const year = String(now.getFullYear()).slice(-2);
-        const deactivatePath = `${DeactivateNotes.DEACTIVATED_ROOT}/${mainTag}/${PathSettings.getTimestampedPath(moment())}`;
+        
+        // 원본 경로에서 시간 구조 추출
+        const pathParts = note.path.split('/');
+        const timeStructure = pathParts.slice(0, 4).join('/'); // YYYY/MM/DD/HH00 부분 유지
+        
+        // 비활성화 경로 구성 (원본 시간 구조 유지)
+        const deactivatePath = `${DeactivateNotes.DEACTIVATED_ROOT}/${mainTag}/${timeStructure}`;
         
         await this.ensureDeactivatedFolder();
         await this.createFolderIfNotExists(deactivatePath);
@@ -92,19 +100,16 @@ export class DeactivateNotes {
 
         while ((match = attachmentRegex.exec(content)) !== null) {
             const attachmentName = match[1];
-            // 현재 노트 디렉토리에서 첨부파일 찾기
             const attachmentPath = currentDir ? `${currentDir}/${attachmentName}` : attachmentName;
             const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentPath);
 
             if (attachmentFile instanceof TFile) {
                 const newAttachmentPath = `${deactivatePath}/${attachmentFile.name}`;
-                // 첨부파일 이동
                 await this.app.vault.rename(attachmentFile, newAttachmentPath);
-                // 노트 내용의 링크는 그대로 유지 (이미 상대 경로 형식이므로)
             }
         }
 
-        // 노트 이동
+        // 노트 이동 (원본 파일명 유지)
         const newPath = `${deactivatePath}/${note.name}`;
         await this.app.vault.rename(note, newPath);
     }
@@ -116,34 +121,22 @@ export class DeactivateNotes {
     }
 
     private findNotesByTags(tags: string[]): Set<TFile> {
-        const notes = new Set<TFile>();
+        const notesToDeactivate = new Set<TFile>();
+        const files = this.app.vault.getMarkdownFiles();
         
-        this.app.vault.getFiles().forEach(file => {
+        // '#' 제거하고 정규화
+        const normalizedTags = tags.map(tag => tag.startsWith('#') ? tag.substring(1) : tag);
+        
+        for (const file of files) {
             const cache = this.app.metadataCache.getFileCache(file);
-            if (cache?.frontmatter?.tags) {
-                const fileTags = Array.isArray(cache.frontmatter.tags) 
-                    ? cache.frontmatter.tags 
-                    : [cache.frontmatter.tags];
-                
-                if (tags.some(inputTag => 
-                    fileTags.some(fileTag => 
-                        fileTag.startsWith(inputTag.replace(/^#/, ''))
-                    )
-                )) {
-                    notes.add(file);
-                }
+            const frontmatterTags = cache?.frontmatter?.tags;
+            
+            if (Array.isArray(frontmatterTags) && 
+                frontmatterTags.some(tag => normalizedTags.includes(tag))) {
+                notesToDeactivate.add(file);
             }
-        });
+        }
         
-        return notes;
-    }
-
-    private async showTagSelectionModal(): Promise<string[]> {
-        return showTagSelectionDialog(this.app, {
-            title: "비활성화할 노트의 태그 입력",
-            placeholder: "태그를 입력하세요 (쉼표로 구분)",
-            confirmText: "비활성화",
-            cancelText: "취소"
-        });
+        return notesToDeactivate;
     }
 }
