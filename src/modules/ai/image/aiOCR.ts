@@ -17,7 +17,7 @@ export class AIOCR {
     async main() {
         try {
             //console.log('이미지 분석 프로세스 시작');
-            new Notice('이미지 분석 프로세스 시작');
+            new Notice('OCR 분석 프로세스 시작');
             const editor = AIEditorUtils.getActiveEditor(this.app);
             const selectedText = editor.getSelection();
             
