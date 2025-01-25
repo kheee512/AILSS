@@ -21,7 +21,7 @@ export class PathSettings {
     static readonly MAX_NOTES = 10000; 
     
     // 경로 포맷 관련 정규식 수정
-    static readonly PATH_REGEX = /^\d{2}\/\d{2}\/\d{2}\/\d{2}\//;
+    static readonly PATH_REGEX = /^\d{2}\/\d{2}\/\d{2}\/\d{2}$/;
     
     // 경로 생성 헬퍼 메서드
     static getTimestampedPath(date: moment.Moment): string {
@@ -42,8 +42,22 @@ export class PathSettings {
         return noteCount < this.MAX_NOTES;
     }
     
-    // 경로 검증 헬퍼 메서드 추가
+    // 경로 검증 헬퍼 메서드 수정
     static isValidPath(path: string): boolean {
-        return this.PATH_REGEX.test(path);
+        // 루트 경로는 유효한 것으로 처리
+        if (path === '/') return true;
+        
+        // 경로를 / 기준으로 분리
+        const parts = path.split('/').filter(p => p.length > 0);
+        
+        // 빈 경로는 유효하지 않음
+        if (parts.length === 0) return false;
+        
+        // YY/MM/DD/HH 형식 검사
+        if (parts.length === 4) {
+            return this.PATH_REGEX.test(parts.join('/'));
+        }
+        
+        return true;
     }
 } 
