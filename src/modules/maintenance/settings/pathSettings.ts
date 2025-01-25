@@ -4,7 +4,7 @@ import type AILSSPlugin from 'main';
 
 export class PathSettings {
     // 기본 경로 포맷
-    static readonly PATH_FORMAT = 'YYYY/MM/DD/HH00';
+    static readonly PATH_FORMAT = 'YY/MM/DD/HH';
     
     // 특수 폴더명
     static readonly DEACTIVATED_ROOT = 'deactivated';
@@ -17,11 +17,11 @@ export class PathSettings {
     static readonly DEFAULT_UNTITLED = 'untitled';
     
     // 최대 노트 개수 제한
-    // 성능 테스트 20,000 완료 (2025-01-24)
-    static readonly MAX_NOTES = 20000; 
+    // 성능 테스트 10,000 완료 (2025-01-25)
+    static readonly MAX_NOTES = 10000; 
     
     // 경로 포맷 관련 정규식 수정
-    static readonly PATH_REGEX = /^\d{4}\/\d{2}\/\d{2}\/\d{2}00\//;
+    static readonly PATH_REGEX = /^\d{2}\/\d{2}\/\d{2}\/\d{2}\//;
     
     // 경로 생성 헬퍼 메서드
     static getTimestampedPath(date: moment.Moment): string {
