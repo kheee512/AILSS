@@ -23,6 +23,8 @@ import { CreateDummy } from './src/modules/maintenance/utils/dev/createDummy';
 import { EmbedNote } from './src/modules/command/create/embedNote';
 import { RecoverNote } from './src/modules/command/create/recoverNote';
 import { GlobalGraphManager } from './src/modules/maintenance/utils/graph/global/globalGraphManager';
+import { RenewNote } from './src/modules/command/move/renewNote';
+import { ReformatNotes } from './src/modules/maintenance/utils/dev/reformatNotes';
 
 
 
@@ -55,6 +57,8 @@ export default class AILSSPlugin extends Plugin {
 	private embedNoteManager: EmbedNote;
 	private recoverNoteManager: RecoverNote;
 	private globalGraphManager: GlobalGraphManager;
+	private renewNoteManager: RenewNote;
+	private reformatNotesManager: ReformatNotes;
 
 	async onload() {
 		await this.loadSettings();
@@ -106,58 +110,58 @@ export default class AILSSPlugin extends Plugin {
 		// GlobalGraphManager 초기화
 		this.globalGraphManager = new GlobalGraphManager(this.app, this);
 
-		// 리본 메뉴에 새 노트 생성 아이콘 추가
-		this.addRibbonIcon('file-plus', '새 노트 생성', () => {
+		// RenewNote 초기화
+		this.renewNoteManager = new RenewNote(this.app, this);
+
+		// ReformatNotes 초기화
+		this.reformatNotesManager = new ReformatNotes(this.app, this);
+
+		// 리본 메뉴 아이콘들 업데이트
+		this.addRibbonIcon('plus', '새 뉴런 생성', () => {
 			this.newNoteManager.createNewNote();
 		});
 
-		// 리본 메뉴에 링크 노트 생성 아이콘 추가
-		this.addRibbonIcon('square-arrow-out-up-right', '링크 노트 생성', () => {
+		this.addRibbonIcon('copy-plus', '시냅스 연결', () => {
 			this.linkNoteManager.createLinkNote();
 		});
 
-		this.addRibbonIcon('delete', '링크 삭제', () => {
+		this.addRibbonIcon('delete', '시냅스 제거', () => {
 			this.deleteLinkManager.deleteLink();
 		});
 
-		// 리본 메뉴에 연결된 노트 태그 업데이트 아이콘 추가
-		this.addRibbonIcon('tags', '연결된 노트 태그 업데이트', () => {
+		this.addRibbonIcon('tags', '시냅스 태그 동기화', () => {
 			this.updateTagsManager.updateCurrentNoteTags();
 		});
 
-		// 리본 메뉴에 강화 아이콘 추가
-		this.addRibbonIcon('zap', '노트 강화', () => {
+		this.addRibbonIcon('zap', '뉴런 강화', () => {
 			this.potentiateManager.potentiateNote();
 		});
 
-		// 리본 메뉴에 노트 삭제 아이콘 추가
-		this.addRibbonIcon('trash', '현재 노트 삭제', () => {
+		this.addRibbonIcon('x', '뉴런 제거', () => {
 			this.deleteCurrentNoteManager.deleteNote();
 		});
 
-		// 리본 메뉴에 비활성화 아이콘 추가
-		this.addRibbonIcon('folder-output', '태그로 노트 비활성화', () => {
+		this.addRibbonIcon('heart-off', '뉴런 비활성화', () => {
 			this.deactivateNotesManager.deactivateNotesByTag();
 		});
 
-		// 리본 메뉴에 활성화 아이콘 추가
-		this.addRibbonIcon('folder-input', '노트 활성화', () => {
+		this.addRibbonIcon('heart-pulse', '뉴런 활성화', () => {
 			this.activateNotesManager.activateNotes();
 		});
 
-		this.addRibbonIcon('image', '이미지 자동 분석', () => {
+		this.addRibbonIcon('image-plus', '이미지 자동 분석', () => {
 			this.aiImageAnalysis.main();
 		});
 
-		this.addRibbonIcon('image-plus', '이미지 분석기', () => {
+		this.addRibbonIcon('scan-search', '이미지 분석기', () => {
 			this.aiImageAnalyzer.main();
 		});
 
-		this.addRibbonIcon('message-circle-question', 'AI 답변', () => {
+		this.addRibbonIcon('messages-square', 'AI 응답 생성', () => {
 			this.aiAnswer.main();
 		});
 
-		this.addRibbonIcon('link-2', 'AI 링크 노트', () => {
+		this.addRibbonIcon('dna', 'AI 시냅스 형성', () => {
 			this.aiLinkNote.createAILinkNote();
 		});
 
@@ -165,59 +169,66 @@ export default class AILSSPlugin extends Plugin {
 			this.aiLatexMath.main();
 		});
 
-		this.addRibbonIcon('bar-chart', '다이어그램 생성', () => {
+		this.addRibbonIcon('view', '뉴런 시각화', () => {
 			this.aiVisualizer.main();
 		});
 
-		// 리본 메뉴에 구조화 아이콘 추가
-		this.addRibbonIcon('list', '노트 구조화', () => {
+		this.addRibbonIcon('brain-circuit', '뉴런 구조 최적화', () => {
 			this.aiStructureNote.main();
 		});
 
-		// 리본 메뉴에 첨부 파일 이름 변경 아이콘 추가
-		this.addRibbonIcon('paperclip', '첨부 파일 이름 변경', () => {
+		this.addRibbonIcon('folder-sync', '부속물 동기화', () => {
 			this.updateAttachmentsManager.updateAttachments();
 		});
 
-		// 리본 메뉴에 무결성 검사 아이콘 추가
-		this.addRibbonIcon('check-circle', '무결성 검사', () => {
+		this.addRibbonIcon('shield-check', '신경망 무결성 검사', () => {
 			this.integrityCheck.checkIntegrity();
 		});
 
-		// 리본 메뉴에 임베드 노트 생성 아이콘 추가
-		this.addRibbonIcon('notepad-text-dashed', '선택한 텍스트로 임베드 노트 생성', () => {
+		this.addRibbonIcon('git-branch', '서브뉴런 생성', () => {
 			this.embedNoteManager.createEmbedNote();
 		});
 
-		// 리본 메뉴에 복구 아이콘 추가
-		this.addRibbonIcon('undo', '링크 복구', () => {
+		this.addRibbonIcon('blend', '시냅스 재생성', () => {
 			this.recoverNoteManager.recoverNote();
 		});
 
-		this.addRibbonIcon('refresh-cw', '글로벌 그래프 설정 적용', () => {
+		this.addRibbonIcon('waypoints', '글로벌 신경망 재구성', () => {
 			this.globalGraphManager.applyGlobalGraphConfig();
+		});
+
+		this.addRibbonIcon('activity', '뉴런 재활성화', () => {
+			this.renewNoteManager.renewCurrentNote();
+		});
+
+		this.addRibbonIcon('flask-conical', '테스트 뉴런 생성', () => {
+			this.createDummyManager.createDummyNotes();
+		});
+
+		this.addRibbonIcon('file-code', '노트 경로 및 프론트매터 재구성', () => {
+			this.reformatNotesManager.reformatAllNotes();
 		});
 
 		// 새 노트 생성 명령어 추가
 		this.addCommand({
 			id: 'create-new-note',
-			name: '새 노트 생성',
-			icon: 'file-plus',
+			name: '새 뉴런 생성',
+			icon: 'plus',
 			callback: () => this.newNoteManager.createNewNote()
 		});
 
 		// 선택 텍스트로 링크 노트 생성 명령어 추가
 		this.addCommand({
 			id: 'create-link-note',
-			name: '선택한 텍스트로 새 노트 생성',
-			icon: 'square-arrow-out-up-right',
+			name: '시냅스 연결',
+			icon: 'copy-plus',
 			editorCallback: () => this.linkNoteManager.createLinkNote()
 		});
 
 		// 커맨드 추가
 		this.addCommand({
 			id: 'update-linked-notes-tags',
-			name: '연결된 노트 태그 업데이트',
+			name: '시냅스 태그 동기화',
 			icon: 'tags',
 			callback: () => this.updateTagsManager.updateCurrentNoteTags()
 		});
@@ -225,7 +236,7 @@ export default class AILSSPlugin extends Plugin {
 		// 강화 명령어 추가
 		this.addCommand({
 			id: 'potentiate-note',
-			name: '노트 강화',
+			name: '뉴런 강화',
 			icon: 'zap',
 			callback: () => this.potentiateManager.potentiateNote()
 		});
@@ -242,51 +253,51 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'delete-current-note',
 			name: '현재 노트 삭제',
-			icon: 'trash',
+			icon: 'x',
 			callback: () => this.deleteCurrentNoteManager.deleteNote()
 		});
 
 		// 비활성화 명령어 추가
 		this.addCommand({
 			id: 'deactivate-notes-by-tag',
-			name: '태그로 노트 비활성화',
-			icon: 'folder-output',
+			name: '뉴런 비활성화',
+			icon: 'heart-off',
 			callback: () => this.deactivateNotesManager.deactivateNotesByTag()
 		});
 
 		// 활성화 명령어 추가
 		this.addCommand({
 			id: 'activate-notes',
-			name: '노트 활성화',
-			icon: 'folder-input',
+			name: '뉴런 활성화',
+			icon: 'heart-pulse',
 			callback: () => this.activateNotesManager.activateNotes()
 		});
 
 		this.addCommand({
 			id: 'ai-image-analysis',
 			name: '이미지 자동 분석',
-			icon: 'image',
+			icon: 'image-plus',
 			editorCallback: () => this.aiImageAnalysis.main()
 		});
 
 		this.addCommand({
 			id: 'ai-image-analyzer',
 			name: '이미지 분석기',
-			icon: 'image-plus',
+			icon: 'scan-search',
 			editorCallback: () => this.aiImageAnalyzer.main()
 		});
 
 		this.addCommand({
 			id: 'ai-answer',
-			name: 'AI 답변',
-			icon: 'message-circle-question',
+			name: 'AI 응답 생성',
+			icon: 'messages-square',
 			editorCallback: () => this.aiAnswer.main()
 		});
 
 		this.addCommand({
 			id: 'ai-link-note',
-			name: 'AI 링크 노트',
-			icon: 'link-2',
+			name: 'AI 시냅스 형성',
+			icon: 'dna',
 			editorCallback: () => this.aiLinkNote.createAILinkNote()
 		});
 
@@ -299,65 +310,81 @@ export default class AILSSPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'ai-visualizer',
-			name: '다이어그램 생성',
-			icon: 'bar-chart',
+			name: '뉴런 시각화',
+			icon: 'view',
 			editorCallback: () => this.aiVisualizer.main()
 		});
 
 		// 구조화 명령어 추가
 		this.addCommand({
 			id: 'ai-structure-note',
-			name: '노트 구조화',
-			icon: 'list',
+			name: '뉴런 구조 최적화',
+			icon: 'brain-circuit',
 			editorCallback: () => this.aiStructureNote.main()
 		});
 
 		// 첨부 파일 이름 변경 명령어 추가
 		this.addCommand({
 			id: 'update-attachments',
-			name: '첨부 파일 이름 변경',
-			icon: 'paperclip',
+			name: '부속물 동기화',
+			icon: 'folder-sync',
 			callback: () => this.updateAttachmentsManager.updateAttachments()
 		});
 
 		// 무결성 검사 명령어 추가
 		this.addCommand({
 			id: 'check-integrity',
-			name: '무결성 검사',
-			icon: 'check-circle',
+			name: '신경망 무결성 검사',
+			icon: 'shield-check',
 			callback: () => this.integrityCheck.checkIntegrity()
 		});
 
 		// 더미 노트 생성 명령어 추가
 		this.addCommand({
 			id: 'create-dummy-notes',
-			name: '더미 노트 생성',
-			icon: 'file-cog',
+			name: '테스트 뉴런 생성',
+			icon: 'flask-conical',
 			callback: () => this.createDummyManager.createDummyNotes()
 		});
 
 		// 임베드 노트 생성 명령어 추가
 		this.addCommand({
 			id: 'create-embed-note',
-			name: '선택한 텍스트로 임베드 노트 생성',
-			icon: 'notepad-text-dashed',
+			name: '서브뉴런 생성',
+			icon: 'git-branch',
 			editorCallback: () => this.embedNoteManager.createEmbedNote()
 		});
 
 		// 복구 명령어 추가
 		this.addCommand({
 			id: 'recover-note',
-			name: '선택한 링크 복구',
-			icon: 'undo',
+			name: '시냅스 재생성',
+			icon: 'blend',
 			editorCallback: () => this.recoverNoteManager.recoverNote()
 		});
 
 		// 글로벌 그래프 설정 적용 명령어 추가
 		this.addCommand({
 			id: 'apply-global-graph-config',
-			name: '글로벌 그래프 설정 적용',
-			icon: 'refresh-cw',
+			name: '글로벌 신경망 재구성',
+			icon: 'waypoints',
 			callback: () => this.globalGraphManager.applyGlobalGraphConfig()
+		});
+
+		// 노트 갱신 명령어 추가
+		this.addCommand({
+			id: 'renew-note',
+			name: '뉴런 재활성화',
+			icon: 'activity',
+			callback: () => this.renewNoteManager.renewCurrentNote()
+		});
+
+		// 노트 재포맷 명령어 추가
+		this.addCommand({
+			id: 'reformat-notes',
+			name: '노트 경로 및 프론트매터 재구성',
+			icon: 'file-code',
+			callback: () => this.reformatNotesManager.reformatAllNotes()
 		});
 	}
 
