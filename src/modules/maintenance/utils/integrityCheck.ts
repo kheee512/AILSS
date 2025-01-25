@@ -2,7 +2,7 @@ import { App, TFile, TFolder, Notice, Modal } from 'obsidian';
 import { moment } from 'obsidian';
 import type AILSSPlugin from 'main';
 import { PathSettings } from '../settings/pathSettings';
-import { FrontmatterManager } from './frontmatterManager';
+import { FrontmatterManager, DefaultFrontmatterConfig } from './frontmatterManager';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
 
 interface IntegrityCheckOptions {
@@ -40,7 +40,7 @@ export class IntegrityCheck {
         return new Promise((resolve) => {
             const modal = new PathSelectionModal(this.app, {
                 title: "경로 입력",
-                placeholder: "예: 2025/01/22/0000 (미입력시 전체 검사)",
+                placeholder: "예: 24/01/22/14 (미입력시 전체 검사)",
                 confirmText: "검사",
                 cancelText: "취소"
             }, (result) => {
@@ -144,6 +144,11 @@ export class IntegrityCheck {
     }
 
     private async checkFile(file: TFile, report: IntegrityReport): Promise<void> {
+        // 경로 형식 검사 추가
+        if (!PathSettings.PATH_REGEX.test(file.parent?.path || '')) {
+            report.invalidFileNames.push(`${file.path} (잘못된 경로 형식)`);
+        }
+
         // 마크다운 파일 검사
         if (file.extension === 'md') {
             // integrity-check 리포트 파일은 프론트매터 검사에서 제외
@@ -191,8 +196,27 @@ export class IntegrityCheck {
     }
 
     private isValidFrontmatter(frontmatter: Record<string, any>): boolean {
-        const requiredFields = ['Created', 'Activated', 'Potentiation', 'tags'];
-        return requiredFields.every(field => frontmatter.hasOwnProperty(field));
+        // DefaultFrontmatterConfig 인터페이스의 키들을 가져와서 검사
+        const requiredFields: (keyof DefaultFrontmatterConfig)[] = ['Activated', 'Potentiation', 'tags'];
+        
+        if (!requiredFields.every(field => frontmatter.hasOwnProperty(field))) {
+            return false;
+        }
+
+        // tags 배열이 존재하는지 확인
+        if (!Array.isArray(frontmatter.tags)) {
+            return false;
+        }
+
+        // Potentiation이 유효한 범위 내에 있는지 확인
+        const potentiation = Number(frontmatter.Potentiation);
+        if (isNaN(potentiation) || 
+            potentiation < FrontmatterManager.INITIAL_POTENTIATION || 
+            potentiation > FrontmatterManager.MAX_POTENTIATION) {
+            return false;
+        }
+
+        return true;
     }
 
     private async checkAttachments(file: TFile, content: string, report: IntegrityReport): Promise<void> {
@@ -260,7 +284,7 @@ export class IntegrityCheck {
             content += `- ${path}\n`;
         });
 
-        content += `\n## 잘못된 파일명 (**${report.invalidFileNames.length}**개)\n`;
+        content += `\n## 잘못된 첨부파일명 또는 경로 (**${report.invalidFileNames.length}**개)\n`;
         report.invalidFileNames.forEach(path => {
             content += `- ${path}\n`;
         });
@@ -276,7 +300,7 @@ export class IntegrityCheck {
         content += `  - 빈 폴더: **${report.emptyFolders.length}**개\n`;
         content += `  - 고아 첨부파일: **${report.orphanedAttachments.length}**개\n`;
         content += `  - 잘못된 프론트매터: **${report.invalidFrontmatters.length}**개\n`;
-        content += `  - 잘못된 파일명: **${report.invalidFileNames.length}**개\n`;
+        content += `  - 잘못된 첨부파일명 또는 경로: **${report.invalidFileNames.length}**개\n`;
 
         const reportFileName = `integrity-check-${moment().format('YYYYMMDD-HHmmss')}.md`;
         await this.app.vault.create(reportFileName, content);

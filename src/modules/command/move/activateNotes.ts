@@ -113,7 +113,7 @@ export class ActivateNotes {
         const pathParts = note.path.split('/');
         const deactivatedIndex = pathParts.indexOf(ActivateNotes.DEACTIVATED_ROOT.split('/')[0]);
         const timeStructureParts = pathParts.slice(deactivatedIndex + 2); // tag 폴더 이후의 시간 구조
-        const timeStructure = timeStructureParts.slice(0, 4).join('/'); // YYYY/MM/DD/HH00
+        const timeStructure = timeStructureParts.slice(0, 4).join('/'); // YY/MM/DD/HH
         
         // 원본 시간 구조를 유지하여 활성화 경로 구성
         const activePath = timeStructure;

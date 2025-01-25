@@ -80,7 +80,7 @@ export class DeactivateNotes {
         
         // 원본 경로에서 시간 구조 추출
         const pathParts = note.path.split('/');
-        const timeStructure = pathParts.slice(0, 4).join('/'); // YYYY/MM/DD/HH00 부분 유지
+        const timeStructure = pathParts.slice(0, 4).join('/'); // YY/MM/DD/HH 부분 유지
         
         // 비활성화 경로 구성 (원본 시간 구조 유지)
         const deactivatePath = `${DeactivateNotes.DEACTIVATED_ROOT}/${mainTag}/${timeStructure}`;

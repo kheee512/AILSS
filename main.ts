@@ -184,11 +184,6 @@ export default class AILSSPlugin extends Plugin {
 			this.integrityCheck.checkIntegrity();
 		});
 
-		// 리본 메뉴에 더미 노트 생성 아이콘 추가
-		this.addRibbonIcon('file-cog', '더미 노트 생성', () => {
-			this.createDummyManager.createDummyNotes();
-		});
-
 		// 리본 메뉴에 임베드 노트 생성 아이콘 추가
 		this.addRibbonIcon('notepad-text-dashed', '선택한 텍스트로 임베드 노트 생성', () => {
 			this.embedNoteManager.createEmbedNote();

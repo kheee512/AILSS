@@ -1,7 +1,7 @@
 import { moment } from 'obsidian';
 import type AILSSPlugin from 'main';
 
-interface DefaultFrontmatterConfig {
+export interface DefaultFrontmatterConfig {
     Activated: string;
     Potentiation: number;
     tags: string[];
@@ -9,10 +9,10 @@ interface DefaultFrontmatterConfig {
 
 export class FrontmatterManager {
     public static readonly DEFAULT_TAGS = ['Initial'];
-    private static readonly INITIAL_POTENTIATION = 0;
-    private static readonly MAX_POTENTIATION = 100;
-    private static readonly POTENTIATION_INCREMENT = 1;
-    private static readonly POTENTIATION_DELAY_MINUTES = 10;
+    public static readonly INITIAL_POTENTIATION = 0;
+    public static readonly MAX_POTENTIATION = 100;
+    public static readonly POTENTIATION_INCREMENT = 1;
+    public static readonly POTENTIATION_DELAY_MINUTES = 10;
 
     constructor() {}
 
