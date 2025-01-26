@@ -83,12 +83,12 @@ export class RenewNote {
     private async generateNewNotePath(file: TFile, newPath: string): Promise<{ newNoteName: string, newNotePath: string }> {
         let index = 0;
         let newNoteName = file.basename;
-        let newNotePath = `${newPath}/${newNoteName}${file.extension}`;
+        let newNotePath = `${newPath}/${newNoteName}.${file.extension}`;
 
         while (this.app.vault.getAbstractFileByPath(newNotePath)) {
             index++;
             newNoteName = `${file.basename}-${index}`;
-            newNotePath = `${newPath}/${newNoteName}${file.extension}`;
+            newNotePath = `${newPath}/${newNoteName}.${file.extension}`;
         }
 
         return { newNoteName, newNotePath };
