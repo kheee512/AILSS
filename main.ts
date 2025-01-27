@@ -3,7 +3,7 @@ import { NewNote } from './src/modules/command/create/newNote';
 import { LinkNote } from './src/modules/command/create/linkNote';
 import { UpdateTags } from './src/modules/command/update/updateTags';
 import { Potentiate } from './src/modules/command/update/potentiate';
-import { DeleteLink } from './src/modules/command/delete/deleteLink';
+import { DeleteLink } from './src/modules/command/delete/deleteAttachments';
 import { DeleteCurrentNote } from './src/modules/command/delete/deleteCurrentNote';
 import { DeactivateNotes } from './src/modules/command/move/deactivateNotes';
 import { ActivateNotes } from './src/modules/command/move/activateNotes';
@@ -19,6 +19,8 @@ import { UpdateAttachments } from './src/modules/command/update/updateAttachment
 import { IntegrityCheck } from './src/modules/maintenance/utils/integrityCheck';
 import { GlobalGraphManager } from './src/modules/maintenance/utils/graph/global/globalGraphManager';
 import { RenewNote } from './src/modules/command/move/renewNote';
+import { EmbedNote } from './src/modules/command/create/embedNote';
+import { RecoverNote } from './src/modules/command/create/recoverNote';
 
 
 
@@ -47,6 +49,8 @@ export default class AILSSPlugin extends Plugin {
 	private integrityCheck: IntegrityCheck;
 	private globalGraphManager: GlobalGraphManager;
 	private renewNoteManager: RenewNote;
+	private embedNoteManager: EmbedNote;
+	private recoverNoteManager: RecoverNote;
 
 
 	async onload() {
@@ -89,12 +93,16 @@ export default class AILSSPlugin extends Plugin {
 		// RenewNote 초기화
 		this.renewNoteManager = new RenewNote(this.app, this);
 
+		// EmbedNote와 RecoverNote 초기화
+		this.embedNoteManager = new EmbedNote(this.app, this);
+		this.recoverNoteManager = new RecoverNote(this.app, this);
+
 		// 리본 메뉴 아이콘들 업데이트
 		this.addRibbonIcon('plus', '노트 생성', () => {
 			this.newNoteManager.createNewNote();
 		});
 
-		this.addRibbonIcon('copy-plus', '노트 연결', () => {
+		this.addRibbonIcon('square-plus', '노트 연결', () => {
 			this.linkNoteManager.createLinkNote();
 		});
 
@@ -158,6 +166,14 @@ export default class AILSSPlugin extends Plugin {
 			this.renewNoteManager.renewCurrentNote();
 		});
 
+		this.addRibbonIcon('copy-plus', '노트 임베드', () => {
+			this.embedNoteManager.createEmbedNote();
+		});
+
+		this.addRibbonIcon('rotate-ccw', '노트 복구', () => {
+			this.recoverNoteManager.recoverNote();
+		});
+
 		// 명령어 추가
 		this.addCommand({
 			id: 'create-neuron',
@@ -169,7 +185,7 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'connect-neuron',
 			name: '노트 연결',
-			icon: 'copy-plus',
+			icon: 'square-plus',
 			editorCallback: () => this.linkNoteManager.createLinkNote()
 		});
 
@@ -276,6 +292,20 @@ export default class AILSSPlugin extends Plugin {
 			name: '노트 갱신',
 			icon: 'activity',
 			callback: () => this.renewNoteManager.renewCurrentNote()
+		});
+
+		this.addCommand({
+			id: 'embed-note',
+			name: '노트 임베드',
+			icon: 'copy-plus',
+			editorCallback: () => this.embedNoteManager.createEmbedNote()
+		});
+
+		this.addCommand({
+			id: 'recover-note',
+			name: '노트 복구',
+			icon: 'rotate-ccw',
+			editorCallback: () => this.recoverNoteManager.recoverNote()
 		});
 
 	}
