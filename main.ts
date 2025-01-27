@@ -201,13 +201,13 @@ export default class AILSSPlugin extends Plugin {
 			this.renewNoteManager.renewCurrentNote();
 		});
 
-		this.addRibbonIcon('flask-conical', '테스트 뉴런 생성', () => {
-			this.createDummyManager.createDummyNotes();
-		});
+		//this.addRibbonIcon('flask-conical', '테스트 뉴런 생성', () => {
+		//	this.createDummyManager.createDummyNotes();
+		//});
 
-		this.addRibbonIcon('file-code', '뉴런 구조 재구성', () => {
-			this.reformatNotesManager.reformatAllNotes();
-		});
+		//this.addRibbonIcon('file-code', '뉴런 구조 재구성', () => {
+		//	this.reformatNotesManager.reformatAllNotes();
+		//});
 
 		// 명령어 추가
 		this.addCommand({

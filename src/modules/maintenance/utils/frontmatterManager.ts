@@ -41,7 +41,7 @@ export class FrontmatterManager {
                 yaml += `${key}: ${value}\n`;
             }
         });
-        yaml += '---\n';
+        yaml += '---';
 
         return yaml;
     }

@@ -24,6 +24,24 @@ export class RenewNote {
         }
 
         try {
+            const now = moment();
+            const currentHour = now.format('YYYY-MM-DD HH');
+            
+            // 노트의 마지막 갱신 시간 확인
+            const content = await this.app.vault.read(activeFile);
+            const frontmatter = this.frontmatterManager.parseFrontmatter(content);
+            const lastActivated = frontmatter?.Activated;
+            
+            if (lastActivated) {
+                const lastActivatedHour = moment(lastActivated, 'YYYY-MM-DD HH:mm').format('YYYY-MM-DD HH');
+                
+                // 같은 시간대에 이미 갱신된 노트는 다시 갱신하지 않음
+                if (lastActivatedHour === currentHour) {
+                    new Notice('이미 현재 시간에 갱신된 노트입니다.');
+                    return;
+                }
+            }
+
             await this.renewNote(activeFile);
             new Notice('노트가 갱신되었습니다.');
         } catch (error) {
@@ -39,6 +57,12 @@ export class RenewNote {
         
         // 새 경로에서 사용할 노트 이름 생성
         const { newNoteName, newNotePath } = await this.generateNewNotePath(file, newPath);
+        
+        // 새 디렉토리가 없으면 생성
+        const newDir = newNotePath.substring(0, newNotePath.lastIndexOf('/'));
+        if (!(await this.app.vault.adapter.exists(newDir))) {
+            await this.app.vault.createFolder(newDir);
+        }
         
         // 첨부파일들의 새 경로 생성
         const attachmentMoves = await this.generateAttachmentPaths(attachments, newNoteName, newPath);
