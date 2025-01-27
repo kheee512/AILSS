@@ -90,35 +90,35 @@ export default class AILSSPlugin extends Plugin {
 		this.renewNoteManager = new RenewNote(this.app, this);
 
 		// 리본 메뉴 아이콘들 업데이트
-		this.addRibbonIcon('plus', '뉴런 생성', () => {
+		this.addRibbonIcon('plus', '노트 생성', () => {
 			this.newNoteManager.createNewNote();
 		});
 
-		this.addRibbonIcon('copy-plus', '뉴런 연결', () => {
+		this.addRibbonIcon('copy-plus', '노트 연결', () => {
 			this.linkNoteManager.createLinkNote();
 		});
 
-		this.addRibbonIcon('delete', '뉴런 연결 해제', () => {
+		this.addRibbonIcon('delete', '첨부파일 삭제', () => {
 			this.deleteLinkManager.deleteLink();
 		});
 
-		this.addRibbonIcon('tags', '뉴런 태그 동기화', () => {
+		this.addRibbonIcon('tags', '태그 동기화', () => {
 			this.updateTagsManager.updateCurrentNoteTags();
 		});
 
-		this.addRibbonIcon('zap', '뉴런 강화', () => {
+		this.addRibbonIcon('zap', '노트 강화', () => {
 			this.potentiateManager.potentiateNote();
 		});
 
-		this.addRibbonIcon('x', '뉴런 삭제', () => {
+		this.addRibbonIcon('x', '노트 삭제', () => {
 			this.deleteCurrentNoteManager.deleteNote();
 		});
 
-		this.addRibbonIcon('heart-off', '뉴런 비활성화', () => {
+		this.addRibbonIcon('heart-off', '노트 비활성화', () => {
 			this.deactivateNotesManager.deactivateNotesByTag();
 		});
 
-		this.addRibbonIcon('heart-pulse', '뉴런 활성화', () => {
+		this.addRibbonIcon('heart-pulse', '노트 활성화', () => {
 			this.activateNotesManager.activateNotes();
 		});
 
@@ -126,11 +126,11 @@ export default class AILSSPlugin extends Plugin {
 			this.aiImageAnalyzer.main();
 		});
 
-		this.addRibbonIcon('messages-square', 'AI 답변 생성', () => {
+		this.addRibbonIcon('messages-square', 'AI 답변', () => {
 			this.aiAnswer.main();
 		});
 
-		this.addRibbonIcon('dna', 'AI 뉴런 연결', () => {
+		this.addRibbonIcon('dna', 'AI 노트 연결', () => {
 			this.aiLinkNote.createAILinkNote();
 		});
 
@@ -138,7 +138,7 @@ export default class AILSSPlugin extends Plugin {
 			this.aiLatexMath.main();
 		});
 
-		this.addRibbonIcon('view', '뉴런 시각화', () => {
+		this.addRibbonIcon('view', '노트 시각화', () => {
 			this.aiVisualizer.main();
 		});
 
@@ -146,71 +146,71 @@ export default class AILSSPlugin extends Plugin {
 			this.updateAttachmentsManager.updateAttachments();
 		});
 
-		this.addRibbonIcon('shield-check', '신경망 검사', () => {
+		this.addRibbonIcon('shield-check', '무결성 검사', () => {
 			this.integrityCheck.checkIntegrity();
 		});
 
-		this.addRibbonIcon('waypoints', '전역 신경망 구성', () => {
+		this.addRibbonIcon('waypoints', '전역 그래프 초기화', () => {
 			this.globalGraphManager.applyGlobalGraphConfig();
 		});
 
-		this.addRibbonIcon('activity', '뉴런 갱신', () => {
+		this.addRibbonIcon('activity', '노트 갱신', () => {
 			this.renewNoteManager.renewCurrentNote();
 		});
 
 		// 명령어 추가
 		this.addCommand({
 			id: 'create-neuron',
-			name: '뉴런 생성',
+			name: '노트 생성',
 			icon: 'plus',
 			callback: () => this.newNoteManager.createNewNote()
 		});
 
 		this.addCommand({
 			id: 'connect-neuron',
-			name: '뉴런 연결',
+			name: '노트 연결',
 			icon: 'copy-plus',
 			editorCallback: () => this.linkNoteManager.createLinkNote()
 		});
 
 		this.addCommand({
 			id: 'sync-neuron-tags',
-			name: '뉴런 태그 동기화',
+			name: '태그 동기화',
 			icon: 'tags',
 			callback: () => this.updateTagsManager.updateCurrentNoteTags()
 		});
 
 		this.addCommand({
 			id: 'strengthen-neuron',
-			name: '뉴런 강화',
+			name: '노트 강화',
 			icon: 'zap',
 			callback: () => this.potentiateManager.potentiateNote()
 		});
 
 		this.addCommand({
 			id: 'disconnect-neuron',
-			name: '뉴런 연결 해제',
+			name: '첨부파일 삭제',
 			icon: 'delete',
 			editorCallback: () => this.deleteLinkManager.deleteLink()
 		});
 
 		this.addCommand({
 			id: 'delete-neuron',
-			name: '뉴런 삭제',
+			name: '노트 삭제',
 			icon: 'x',
 			callback: () => this.deleteCurrentNoteManager.deleteNote()
 		});
 
 		this.addCommand({
 			id: 'deactivate-neuron',
-			name: '뉴런 비활성화',
+			name: '노트 비활성화',
 			icon: 'heart-off',
 			callback: () => this.deactivateNotesManager.deactivateNotesByTag()
 		});
 
 		this.addCommand({
 			id: 'activate-neuron',
-			name: '뉴런 활성화',
+			name: '노트 활성화',
 			icon: 'heart-pulse',
 			callback: () => this.activateNotesManager.activateNotes()
 		});
@@ -224,14 +224,14 @@ export default class AILSSPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'generate-ai-answer',
-			name: 'AI 답변 생성',
+			name: 'AI 답변',
 			icon: 'messages-square',
 			editorCallback: () => this.aiAnswer.main()
 		});
 
 		this.addCommand({
 			id: 'connect-ai-neuron',
-			name: 'AI 뉴런 연결',
+			name: 'AI 노트 연결',
 			icon: 'dna',
 			editorCallback: () => this.aiLinkNote.createAILinkNote()
 		});
@@ -245,7 +245,7 @@ export default class AILSSPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'visualize-neuron',
-			name: '뉴런 시각화',
+			name: '노트 시각화',
 			icon: 'view',
 			editorCallback: () => this.aiVisualizer.main()
 		});
@@ -259,21 +259,21 @@ export default class AILSSPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'check-neural-network',
-			name: '신경망 검사',
+			name: '무결성 검사',
 			icon: 'shield-check',
 			callback: () => this.integrityCheck.checkIntegrity()
 		});
 
 		this.addCommand({
 			id: 'configure-global-network',
-			name: '전역 신경망 구성',
+			name: '전역 그래프 초기화',
 			icon: 'waypoints',
 			callback: () => this.globalGraphManager.applyGlobalGraphConfig()
 		});
 
 		this.addCommand({
 			id: 'refresh-neuron',
-			name: '뉴런 갱신',
+			name: '노트 갱신',
 			icon: 'activity',
 			callback: () => this.renewNoteManager.renewCurrentNote()
 		});
