@@ -100,22 +100,12 @@ export class EmbedNote {
 
             // 선택된 텍스트를 일반 링크로 변경
             const beforeText = firstLine.substring(0, cursor.ch);
-            const afterText = firstLine.substring(cursor.ch + editor.getSelection().length);
-            const linkText = editor.getSelection();
-
-            if (!linkText) {
-                throw new Error("선택된 텍스트가 없습니다.");
-            }
-
-            // 첫 줄만 수정하고 나머지 줄은 그대로 유지
-            const newFirstLine = `${beforeText}[[${folderPath}/${fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '')}|${linkText}]]${afterText}`;
-            const newLines = [newFirstLine, ...lines.slice(1)];
-
-            editor.replaceRange(
-                newLines.join('\n'),
-                { line: cursor.line, ch: 0 },
-                { line: cursor.line + lines.length, ch: 0 }
-            );
+            const linkText = lines[0].trim().replace(/^[-*+]\s+/, '');
+            
+            // 첫 번째 줄만 링크로 변경하고 나머지는 그대로 두기
+            const newFirstLine = `${beforeText}[[${folderPath}/${fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '')}|${linkText}]]`;
+            
+            editor.setLine(cursor.line, newFirstLine);
 
             new Notice(`새 노트가 생성되었습니다: ${newFile.path}`);
             return newFile;
