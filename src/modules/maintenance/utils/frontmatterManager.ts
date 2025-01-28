@@ -2,8 +2,8 @@ import { moment } from 'obsidian';
 import type AILSSPlugin from 'main';
 
 export interface DefaultFrontmatterConfig {
-    Activated: string;
-    Potentiation: number;
+    activated: string;
+    potentiation: number;
     tags: string[];
 }
 
@@ -18,8 +18,8 @@ export class FrontmatterManager {
 
     private getDefaultFrontmatter(now: moment.Moment): DefaultFrontmatterConfig {
         return {
-            Activated: now.format('YYYY-MM-DD HH:mm'),
-            Potentiation: FrontmatterManager.INITIAL_POTENTIATION,
+            activated: now.format('YYYY-MM-DD HH:mm'),
+            potentiation: FrontmatterManager.INITIAL_POTENTIATION,
             tags: [...FrontmatterManager.DEFAULT_TAGS]
         };
     }

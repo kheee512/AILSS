@@ -30,8 +30,8 @@ export class Potentiate {
             return;
         }
 
-        const currentPotentiation = Number(frontmatter.Potentiation) || 0;
-        const lastActivated = frontmatter.Activated ? new Date(frontmatter.Activated) : null;
+        const currentPotentiation = Number(frontmatter.potentiation) || 0;
+        const lastActivated = frontmatter.activated ? new Date(frontmatter.activated) : null;
 
         // 최대 강화 지수 체크
         if (FrontmatterManager.isPotentiationMaxed(currentPotentiation)) {
@@ -67,8 +67,8 @@ export class Potentiate {
         const formattedDate = now.format('YYYY-MM-DD HH:mm');
 
         const updatedContent = this.frontmatterManager.updateFrontmatter(fileContent, {
-            Potentiation: newPotentiation,
-            Activated: formattedDate
+            potentiation: newPotentiation,
+            activated: formattedDate
         });
 
         await this.app.vault.modify(activeFile, updatedContent);

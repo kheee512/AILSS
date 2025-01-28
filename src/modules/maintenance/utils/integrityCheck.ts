@@ -197,7 +197,7 @@ export class IntegrityCheck {
 
     private isValidFrontmatter(frontmatter: Record<string, any>): boolean {
         // DefaultFrontmatterConfig 인터페이스의 키들을 가져와서 검사
-        const requiredFields: (keyof DefaultFrontmatterConfig)[] = ['Activated', 'Potentiation', 'tags'];
+        const requiredFields: (keyof DefaultFrontmatterConfig)[] = ['activated', 'potentiation', 'tags'];
         
         if (!requiredFields.every(field => frontmatter.hasOwnProperty(field))) {
             return false;

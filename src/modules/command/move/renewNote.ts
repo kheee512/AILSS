@@ -70,8 +70,8 @@ export class RenewNote {
         // 프론트매터 업데이트
         const content = await this.app.vault.read(file);
         const updatedContent = this.frontmatterManager.updateFrontmatter(content, {
-            Activated: now.format('YYYY-MM-DD HH:mm'),
-            Potentiation: FrontmatterManager.INITIAL_POTENTIATION
+            activated: now.format('YYYY-MM-DD HH:mm'),
+            potentiation: FrontmatterManager.INITIAL_POTENTIATION
         });
 
         // 파일 이동 실행
