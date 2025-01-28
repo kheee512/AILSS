@@ -80,6 +80,7 @@ export class AILinkNote {
 
             // 프론트매터 생성 (기본 태그 제외하고 상속받은 태그만 포함)
             const noteContent = frontmatterManager.generateFrontmatter({
+                title: selectedText,
                 tags: nonDefaultTags
             }) + `\n${aiContent}`;
 

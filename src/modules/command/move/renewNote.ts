@@ -24,22 +24,14 @@ export class RenewNote {
         }
 
         try {
-            const now = moment();
-            const currentHour = now.format('YYYY-MM-DD HH');
-            
-            // 노트의 마지막 갱신 시간 확인
             const content = await this.app.vault.read(activeFile);
             const frontmatter = this.frontmatterManager.parseFrontmatter(content);
-            const lastActivated = frontmatter?.Activated;
             
-            if (lastActivated) {
-                const lastActivatedHour = moment(lastActivated, 'YYYY-MM-DD HH:mm').format('YYYY-MM-DD HH');
-                
-                // 같은 시간대에 이미 갱신된 노트는 다시 갱신하지 않음
-                if (lastActivatedHour === currentHour) {
-                    new Notice('이미 현재 시간에 갱신된 노트입니다.');
-                    return;
-                }
+            // potentiation이 최대값이 아니면 갱신 불가
+            const currentPotentiation = frontmatter?.potentiation ?? 0;
+            if (!FrontmatterManager.isPotentiationMaxed(currentPotentiation)) {
+                new Notice('potentiation이 최대값에 도달하지 않았습니다.');
+                return;
             }
 
             await this.renewNote(activeFile);
@@ -67,9 +59,10 @@ export class RenewNote {
         // 첨부파일들의 새 경로 생성
         const attachmentMoves = await this.generateAttachmentPaths(attachments, newNoteName, newPath);
         
-        // 프론트매터 업데이트
+        // 프론트매터 업데이트 - created, activated, potentiation 초기화
         const content = await this.app.vault.read(file);
         const updatedContent = this.frontmatterManager.updateFrontmatter(content, {
+            created: now.format('YYYY-MM-DD HH:mm'),
             activated: now.format('YYYY-MM-DD HH:mm'),
             potentiation: FrontmatterManager.INITIAL_POTENTIATION
         });

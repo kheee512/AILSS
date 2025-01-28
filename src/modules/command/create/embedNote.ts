@@ -75,6 +75,7 @@ export class EmbedNote {
 
             // 프론트매터 생성 (상속받은 태그만 포함)
             const noteContent = frontmatterManager.generateFrontmatter({
+                title: firstLineContent,
                 tags: nonDefaultTags
             });
 

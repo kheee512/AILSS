@@ -160,7 +160,7 @@ export class IntegrityCheck {
             
             // 프론트매터 검사
             const frontmatter = this.frontmatterManager.parseFrontmatter(content);
-            if (!frontmatter || !this.isValidFrontmatter(frontmatter)) {
+            if (!frontmatter || !this.isValidFrontmatter(frontmatter, file)) {
                 report.invalidFrontmatters.push(file.path);
             }
 
@@ -195,11 +195,26 @@ export class IntegrityCheck {
         return !(noteFile instanceof TFile);
     }
 
-    private isValidFrontmatter(frontmatter: Record<string, any>): boolean {
+    private isValidFrontmatter(frontmatter: Record<string, any>, file: TFile): boolean {
         // DefaultFrontmatterConfig 인터페이스의 키들을 가져와서 검사
-        const requiredFields: (keyof DefaultFrontmatterConfig)[] = ['activated', 'potentiation', 'tags'];
+        const requiredFields: (keyof DefaultFrontmatterConfig)[] = ['title', 'created', 'activated', 'potentiation', 'tags'];
         
         if (!requiredFields.every(field => frontmatter.hasOwnProperty(field))) {
+            return false;
+        }
+
+        // title이 파일명과 일치하는지 확인
+        if (frontmatter.title !== file.basename) {
+            return false;
+        }
+
+        // created가 유효한 날짜 형식인지 확인 ('YYYY-MM-DD HH:mm' 형식)
+        if (!moment(frontmatter.created, 'YYYY-MM-DD HH:mm', true).isValid()) {
+            return false;
+        }
+
+        // activated가 유효한 날짜 형식인지 확인 ('YYYY-MM-DD HH:mm' 형식)
+        if (!moment(frontmatter.activated, 'YYYY-MM-DD HH:mm', true).isValid()) {
             return false;
         }
 
@@ -209,7 +224,7 @@ export class IntegrityCheck {
         }
 
         // Potentiation이 유효한 범위 내에 있는지 확인
-        const potentiation = Number(frontmatter.Potentiation);
+        const potentiation = Number(frontmatter.potentiation);
         if (isNaN(potentiation) || 
             potentiation < FrontmatterManager.INITIAL_POTENTIATION || 
             potentiation > FrontmatterManager.MAX_POTENTIATION) {

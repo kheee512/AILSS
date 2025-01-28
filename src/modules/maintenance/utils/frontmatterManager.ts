@@ -2,6 +2,8 @@ import { moment } from 'obsidian';
 import type AILSSPlugin from 'main';
 
 export interface DefaultFrontmatterConfig {
+    title: string;
+    created: string;
     activated: string;
     potentiation: number;
     tags: string[];
@@ -9,6 +11,7 @@ export interface DefaultFrontmatterConfig {
 
 export class FrontmatterManager {
     public static readonly DEFAULT_TAGS = ['Initial'];
+    public static readonly DEFAULT_UNTITLED = 'untitled';
     public static readonly INITIAL_POTENTIATION = 0;
     public static readonly MAX_POTENTIATION = 100;
     public static readonly POTENTIATION_INCREMENT = 1;
@@ -18,6 +21,8 @@ export class FrontmatterManager {
 
     private getDefaultFrontmatter(now: moment.Moment): DefaultFrontmatterConfig {
         return {
+            title: FrontmatterManager.DEFAULT_UNTITLED,
+            created: now.format('YYYY-MM-DD HH:mm'),
             activated: now.format('YYYY-MM-DD HH:mm'),
             potentiation: FrontmatterManager.INITIAL_POTENTIATION,
             tags: [...FrontmatterManager.DEFAULT_TAGS]
@@ -32,8 +37,25 @@ export class FrontmatterManager {
             : this.getDefaultFrontmatter(now);
 
         const mergedFields = { ...defaultFields, ...additionalFields };
-
+        
+        // 프론트매터 순서 정의
+        const orderedKeys = ['title', 'created', 'activated', 'potentiation', 'tags'];
+        
         let yaml = '---\n';
+        // 정의된 순서대로 먼저 처리
+        orderedKeys.forEach((key: keyof DefaultFrontmatterConfig) => {
+            if (key in mergedFields) {
+                const value = mergedFields[key];
+                if (Array.isArray(value)) {
+                    yaml += `${key}:\n${value.map(v => `  - ${v}`).join('\n')}\n`;
+                } else {
+                    yaml += `${key}: ${value}\n`;
+                }
+                delete mergedFields[key];
+            }
+        });
+        
+        // 나머지 필드들 처리
         Object.entries(mergedFields).forEach(([key, value]) => {
             if (Array.isArray(value)) {
                 yaml += `${key}:\n${value.map(v => `  - ${v}`).join('\n')}\n`;
