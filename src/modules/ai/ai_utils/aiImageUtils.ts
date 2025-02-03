@@ -7,11 +7,13 @@ export class AIImageUtils {
         imageFile: TFile
     }> {
         try {
-            //console.log(`이미지 파일 읽기 시작: ${imagePath}`);
             new Notice(`이미지 파일 읽기 시작: ${imagePath}`);
             
-            const imageFile = app.vault.getAbstractFileByPath(imagePath);
-            if (!(imageFile instanceof TFile)) {
+            // 현재 활성화된 파일의 경로 가져오기
+            const activeFile = app.workspace.getActiveFile();
+            const imageFile = await this.findImageFile(app, imagePath, activeFile?.parent?.path);
+            
+            if (!imageFile) {
                 throw new Error('이미지 파일을 찾을 수 없습니다.');
             }
 
@@ -35,10 +37,28 @@ export class AIImageUtils {
                 imageFile
             };
         } catch (error) {
-            //console.error('이미지 처리 중 오류:', error);
             new Notice('이미지 처리 중 오류:', error);
             throw error;
         }
+    }
+
+    private static async findImageFile(app: App, imageName: string, currentPath?: string): Promise<TFile | null> {
+        // 1. 현재 노트 경로에서 이미지 찾기
+        if (currentPath) {
+            const imagePathInCurrent = `${currentPath}/${imageName}`;
+            const fileInCurrent = app.vault.getAbstractFileByPath(imagePathInCurrent);
+            if (fileInCurrent instanceof TFile) {
+                return fileInCurrent;
+            }
+        }
+
+        // 2. vault 최상단에서 이미지 찾기
+        const fileInRoot = app.vault.getAbstractFileByPath(imageName);
+        if (fileInRoot instanceof TFile) {
+            return fileInRoot;
+        }
+
+        return null;
     }
 
     static arrayBufferToBase64(buffer: ArrayBuffer): string {
