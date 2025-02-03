@@ -3,7 +3,7 @@ import { NewNote } from './src/modules/command/create/newNote';
 import { LinkNote } from './src/modules/command/create/linkNote';
 import { UpdateTags } from './src/modules/command/update/updateTags';
 import { Potentiate } from './src/modules/command/update/potentiate';
-import { DeleteLink } from './src/modules/command/delete/deleteAttachments';
+import { DeleteAttachment } from './src/modules/command/delete/deleteAttachments';
 import { DeleteCurrentNote } from './src/modules/command/delete/deleteCurrentNote';
 import { DeactivateNotes } from './src/modules/command/move/deactivateNotes';
 import { ActivateNotes } from './src/modules/command/move/activateNotes';
@@ -31,7 +31,7 @@ export default class AILSSPlugin extends Plugin {
 	private updateTagsManager: UpdateTags;
 	
 	private potentiateManager: Potentiate;
-	private deleteLinkManager: DeleteLink;
+	private deleteAttachmentManager: DeleteAttachment;
 	private deleteCurrentNoteManager: DeleteCurrentNote;
 	
 	private deactivateNotesManager: DeactivateNotes;
@@ -62,7 +62,7 @@ export default class AILSSPlugin extends Plugin {
 		this.updateTagsManager = new UpdateTags(this.app, this);
 		
 		this.potentiateManager = new Potentiate(this.app, this);
-		this.deleteLinkManager = new DeleteLink(this.app, this);
+		this.deleteAttachmentManager = new DeleteAttachment(this.app, this);
 		this.deleteCurrentNoteManager = new DeleteCurrentNote(this.app, this);
 		
 		this.deactivateNotesManager = new DeactivateNotes(this.app, this);
@@ -107,7 +107,7 @@ export default class AILSSPlugin extends Plugin {
 		});
 
 		this.addRibbonIcon('delete', '첨부파일 삭제', () => {
-			this.deleteLinkManager.deleteLink();
+			this.deleteAttachmentManager.deleteLink();
 		});
 
 		this.addRibbonIcon('tags', '태그 동기화', () => {
@@ -201,13 +201,6 @@ export default class AILSSPlugin extends Plugin {
 			name: '노트 강화',
 			icon: 'zap',
 			callback: () => this.potentiateManager.potentiateNote()
-		});
-
-		this.addCommand({
-			id: 'disconnect-neuron',
-			name: '첨부파일 삭제',
-			icon: 'delete',
-			editorCallback: () => this.deleteLinkManager.deleteLink()
 		});
 
 		this.addCommand({
@@ -306,6 +299,13 @@ export default class AILSSPlugin extends Plugin {
 			name: '노트 복구',
 			icon: 'rotate-ccw',
 			editorCallback: () => this.recoverNoteManager.recoverNote()
+		});
+
+		this.addCommand({
+			id: 'delete-attachment',
+			name: '첨부파일 삭제',
+			icon: 'delete',
+			editorCallback: () => this.deleteAttachmentManager.deleteLink()
 		});
 
 	}

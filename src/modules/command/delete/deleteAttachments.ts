@@ -4,7 +4,7 @@ import { showConfirmationDialog } from '../../../components/confirmationModal';
 import { CleanEmptyFolders } from '../../maintenance/utils/cleanEmptyFolders';
 import { PathSettings } from '../../maintenance/settings/pathSettings';
 
-export class DeleteLink {
+export class DeleteAttachment {
     private app: App;
     private plugin: AILSSPlugin;
     private cleanEmptyFolders: CleanEmptyFolders;
@@ -22,6 +22,9 @@ export class DeleteLink {
                 new Notice('활성화된 노트가 없습니다.');
                 return;
             }
+
+            // 현재 노트의 디렉토리 경로 가져오기
+            const currentDir = activeFile.parent?.path || "";
 
             const editor = this.app.workspace.activeEditor?.editor;
             if (!editor) {
@@ -50,8 +53,10 @@ export class DeleteLink {
             for (const link of attachmentLinks) {
                 const match = link.text.match(/!\[\[(.*?)\]\]/);
                 if (match) {
-                    const filePath = match[1].trim();
-                    const file = this.app.vault.getAbstractFileByPath(filePath);
+                    const fileName = match[1].trim();
+                    // 현재 디렉토리 경로와 파일명을 결합
+                    const fullPath = currentDir ? `${currentDir}/${fileName}` : fileName;
+                    const file = this.app.vault.getAbstractFileByPath(fullPath);
                     filesToDelete.push({
                         file: file instanceof TFile ? file : null,
                         originalText: link.text
