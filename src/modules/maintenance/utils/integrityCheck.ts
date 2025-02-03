@@ -21,7 +21,10 @@ interface IntegrityReport {
     };
     emptyFolders: string[];
     orphanedAttachments: string[];
-    invalidFrontmatters: string[];
+    invalidFrontmatters: {
+        path: string;
+        errors: string[];
+    }[];
     invalidFileNames: string[];
 }
 
@@ -40,7 +43,7 @@ export class IntegrityCheck {
         return new Promise((resolve) => {
             const modal = new PathSelectionModal(this.app, {
                 title: "경로 입력",
-                placeholder: "예: 24/01/22/14 (미입력시 전체 검사)",
+                placeholder: "예: 2024/01/22 (미입력시 전체 검사)",
                 confirmText: "검사",
                 cancelText: "취소"
             }, (result) => {
@@ -160,8 +163,19 @@ export class IntegrityCheck {
             
             // 프론트매터 검사
             const frontmatter = this.frontmatterManager.parseFrontmatter(content);
-            if (!frontmatter || !this.isValidFrontmatter(frontmatter, file)) {
-                report.invalidFrontmatters.push(file.path);
+            if (!frontmatter) {
+                report.invalidFrontmatters.push({
+                    path: file.path,
+                    errors: ["프론트매터가 없거나 형식이 잘못됨"]
+                });
+                return;
+            }
+            const frontmatterErrors = this.validateFrontmatter(frontmatter, file);
+            if (frontmatterErrors.length > 0) {
+                report.invalidFrontmatters.push({
+                    path: file.path,
+                    errors: frontmatterErrors
+                });
             }
 
             // 첨부파일 링크 검사
@@ -195,53 +209,66 @@ export class IntegrityCheck {
         return !(noteFile instanceof TFile);
     }
 
-    private isValidFrontmatter(frontmatter: Record<string, any>, file: TFile): boolean {
-        // DefaultFrontmatterConfig 인터페이스의 키들을 가져와서 검사
+    private validateFrontmatter(frontmatter: Record<string, any>, file: TFile): string[] {
+        const errors: string[] = [];
+        
+        if (!frontmatter) {
+            return ["프론트매터가 없거나 형식이 잘못됨"];
+        }
+
         const requiredFields: (keyof DefaultFrontmatterConfig)[] = [
             'title', 'id', 'date', 'aliases', 'tags', 'potentiation', 'updated'
         ];
         
-        if (!requiredFields.every(field => frontmatter.hasOwnProperty(field))) {
-            return false;
+        // 필수 필드 존재 여부 확인
+        requiredFields.forEach(field => {
+            if (!frontmatter.hasOwnProperty(field)) {
+                errors.push(`필수 필드 '${field}' 누락`);
+            }
+        });
+
+        // id 검증
+        if (frontmatter.id) {
+            if (frontmatter.id !== file.basename) {
+                errors.push(`id가 파일명과 불일치 (id: ${frontmatter.id}, 파일명: ${file.basename})`);
+            }
+            if (!/^\d{14}$/.test(frontmatter.id)) {
+                errors.push('id가 14자리 숫자 형식(YYYYMMDDHHmmss)이 아님');
+            }
         }
 
-        // title이 파일명과 일치하는지 확인
-        if (frontmatter.title !== file.basename) {
-            return false;
+        // 날짜 형식 검증
+        if (frontmatter.date && !moment(frontmatter.date, moment.ISO_8601, true).isValid()) {
+            errors.push('date가 올바른 ISO 8601 형식이 아님');
+        }
+        if (frontmatter.updated && !moment(frontmatter.updated, moment.ISO_8601, true).isValid()) {
+            errors.push('updated가 올바른 ISO 8601 형식이 아님');
         }
 
-        // id가 14자리 숫자인지 확인 (YYYYMMDDHHmmss 형식)
-        if (!/^\d{14}$/.test(frontmatter.id)) {
-            return false;
+        // aliases 검증
+        if (frontmatter.aliases && !Array.isArray(frontmatter.aliases)) {
+            errors.push('aliases가 배열 형식이 아님');
         }
 
-        // date와 updated가 유효한 ISO 8601 형식인지 확인
-        if (!moment(frontmatter.date, moment.ISO_8601, true).isValid()) {
-            return false;
-        }
-        if (!moment(frontmatter.updated, moment.ISO_8601, true).isValid()) {
-            return false;
-        }
-
-        // aliases가 배열인지 확인
-        if (!Array.isArray(frontmatter.aliases)) {
-            return false;
+        // tags 검증
+        if (frontmatter.tags) {
+            if (!Array.isArray(frontmatter.tags)) {
+                errors.push('tags가 배열 형식이 아님');
+            }
         }
 
-        // tags 배열이 존재하고 'Initial'을 포함하는지 확인
-        if (!Array.isArray(frontmatter.tags)) {
-            return false;
+        // potentiation 검증
+        if (frontmatter.potentiation) {
+            const potentiation = Number(frontmatter.potentiation);
+            if (isNaN(potentiation)) {
+                errors.push('potentiation이 숫자가 아님');
+            } else if (potentiation < FrontmatterManager.INITIAL_POTENTIATION || 
+                       potentiation > FrontmatterManager.MAX_POTENTIATION) {
+                errors.push(`potentiation이 유효 범위를 벗어남 (${FrontmatterManager.INITIAL_POTENTIATION}~${FrontmatterManager.MAX_POTENTIATION})`);
+            }
         }
 
-        // Potentiation이 유효한 범위 내에 있는지 확인
-        const potentiation = Number(frontmatter.potentiation);
-        if (isNaN(potentiation) || 
-            potentiation < FrontmatterManager.INITIAL_POTENTIATION || 
-            potentiation > FrontmatterManager.MAX_POTENTIATION) {
-            return false;
-        }
-
-        return true;
+        return errors;
     }
 
     private async checkAttachments(file: TFile, content: string, report: IntegrityReport): Promise<void> {
@@ -250,16 +277,12 @@ export class IntegrityCheck {
 
         while ((match = linkRegex.exec(content)) !== null) {
             const linkPath = match[1].split('|')[0].trim();
-            // .md 확장자가 없는 경우 자동으로 추가
-            const fullPath = linkPath.endsWith('.md') ? linkPath : `${linkPath}.md`;
-            const linkedFile = this.app.vault.getAbstractFileByPath(fullPath);
+            // 첨부파일이 현재 노트와 같은 폴더에 있는지 확인
+            const attachmentPath = `${file.parent?.path}/${linkPath}`;
+            const linkedFile = this.app.vault.getAbstractFileByPath(attachmentPath);
 
             if (!linkedFile) {
-                // .md를 제외한 경로로도 한번 더 확인
-                const alternateFile = this.app.vault.getAbstractFileByPath(linkPath);
-                if (!alternateFile) {
-                    report.orphanedAttachments.push(`${file.path} -> ${linkPath} (링크 깨짐)`);
-                }
+                report.orphanedAttachments.push(`${file.path} -> ${linkPath} (링크 깨짐)`);
             }
             // 파일이 존재하고 첨부파일인 경우에만 이름 규칙 검사
             else if (linkedFile instanceof TFile && this.isAttachmentFile(linkedFile)) {
@@ -276,10 +299,13 @@ export class IntegrityCheck {
     }
 
     private isValidAttachmentName(file: TFile): boolean {
-        // Development-1.png 형식이면 true를 반환
-        const fileNamePattern = new RegExp(`^[^-]+-\\d+\\.${file.extension}$`);
-        const isValid = fileNamePattern.test(file.basename);
-        return isValid;
+        // 첨부파일 이름이 "노트ID-숫자.확장자" 형식인지 확인
+        const attachmentNameParts = file.basename.split('-');
+        const noteId = this.getBaseNoteName(file);
+        
+        // 첨부파일 이름이 노트ID로 시작하고, -숫자 형식으로 끝나는지 확인
+        const pattern = new RegExp(`^${noteId}-\\d+$`);
+        return pattern.test(file.basename);
     }
 
     private async generateReport(report: IntegrityReport): Promise<void> {
@@ -305,8 +331,11 @@ export class IntegrityCheck {
         });
 
         content += `\n## 잘못된 프론트매터 (**${report.invalidFrontmatters.length}**개)\n`;
-        report.invalidFrontmatters.forEach(path => {
-            content += `- ${path}\n`;
+        report.invalidFrontmatters.forEach(item => {
+            content += `- ${item.path}\n`;
+            item.errors.forEach(error => {
+                content += `  - ${error}\n`;
+            });
         });
 
         content += `\n## 잘못된 첨부파일명 또는 경로 (**${report.invalidFileNames.length}**개)\n`;
