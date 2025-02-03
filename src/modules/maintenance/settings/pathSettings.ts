@@ -4,7 +4,7 @@ import type AILSSPlugin from 'main';
 
 export class PathSettings {
     // 기본 경로 포맷
-    static readonly PATH_FORMAT = 'YY/MM/DD/HH';
+    static readonly PATH_FORMAT = 'YYYY/MM/DD';
     
     // 특수 폴더명
     static readonly DEACTIVATED_ROOT = 'deactivated';
@@ -21,7 +21,7 @@ export class PathSettings {
     static readonly MAX_NOTES = 10000; 
     
     // 경로 포맷 관련 정규식 수정
-    static readonly PATH_REGEX = /^\d{2}\/\d{2}\/\d{2}\/\d{2}$/;
+    static readonly PATH_REGEX = /^\d{4}\/\d{2}\/\d{2}$/;
     
     // 경로 생성 헬퍼 메서드
     static getTimestampedPath(date: moment.Moment): string {
@@ -53,8 +53,8 @@ export class PathSettings {
         // 빈 경로는 유효하지 않음
         if (parts.length === 0) return false;
         
-        // YY/MM/DD/HH 형식 검사
-        if (parts.length === 4) {
+        // YYYY/MM/DD 형식 검사
+        if (parts.length === 3) {
             return this.PATH_REGEX.test(parts.join('/'));
         }
         
