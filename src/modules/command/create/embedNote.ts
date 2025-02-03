@@ -72,6 +72,9 @@ export class EmbedNote {
 
             const now = moment();
             const folderPath = PathSettings.getTimestampedPath(now);
+            
+            // 파일명을 ID 형식으로 생성
+            const fileName = PathSettings.getDefaultFileName();
 
             // 프론트매터 생성 (상속받은 태그만 포함)
             const noteContent = frontmatterManager.generateFrontmatter({
@@ -79,9 +82,6 @@ export class EmbedNote {
                 tags: nonDefaultTags
             });
 
-            // 파일명으로 첫 줄의 텍스트 사용
-            const fileName = `${firstLineContent}${PathSettings.DEFAULT_FILE_EXTENSION}`;
-            
             // 같은 경로에 동일한 파일명이 있는지 확인
             if (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
                 new Notice(`이미 "${firstLineContent}" 노트가 해당 경로에 존재합니다.`);
@@ -93,18 +93,17 @@ export class EmbedNote {
                 await this.app.vault.createFolder(folderPath);
             }
 
-            // 노트 생성 (하위 불렛 포인트들만 포함)
+            // 노트 생성
             const newFile = await this.app.vault.create(
                 `${folderPath}/${fileName}`,
                 `${noteContent}\n${selectedText}`
             );
 
-            // 선택된 텍스트를 일반 링크로 변경
+            // 첫 번째 줄만 링크로 변경하고 나머지는 그대로 두기
             const beforeText = firstLine.substring(0, cursor.ch);
             const linkText = lines[0].trim().replace(/^[-*+]\s+/, '');
-            
-            // 첫 번째 줄만 링크로 변경하고 나머지는 그대로 두기
-            const newFirstLine = `${beforeText}[[${folderPath}/${fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '')}|${linkText}]]`;
+            const fileNameWithoutExtension = fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '');
+            const newFirstLine = `${beforeText}[[${fileNameWithoutExtension}|${linkText}]]`;
             
             editor.setLine(cursor.line, newFirstLine);
 

@@ -63,13 +63,9 @@ export class AILinkNote {
 
             const now = moment();
             const folderPath = PathSettings.getTimestampedPath(now);
-            const fileName = `${selectedText}${PathSettings.DEFAULT_FILE_EXTENSION}`;
             
-            // 같은 경로에 동일한 파일명이 있는지 먼저 확인
-            if (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
-                new Notice(`이미 "${selectedText}" 노트가 해당 경로에 존재합니다.`);
-                return;
-            }
+            // 파일명을 ID 형식으로 생성
+            const fileName = PathSettings.getDefaultFileName();
 
             // AI 분석 요청
             new Notice("AI 분석 중...");
@@ -104,7 +100,8 @@ export class AILinkNote {
             const textAtPosition = editor.getSelection().trim();
             
             if (textAtPosition === selectedText) {
-                editor.replaceSelection(`[[${folderPath}/${fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '')}|${selectedText}]]`);
+                const fileNameWithoutExtension = fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '');
+                editor.replaceSelection(`[[${fileNameWithoutExtension}|${selectedText}]]`);
             } else {
                 new Notice('선택한 텍스트의 위치가 변경되었습니다. 수동으로 링크를 삽입해주세요.');
                 console.log('Original text:', selectedText, 'Text at position:', textAtPosition);

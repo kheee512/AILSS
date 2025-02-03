@@ -51,21 +51,15 @@ export class LinkNote {
 
             const now = moment();
             const folderPath = PathSettings.getTimestampedPath(now);
+            
+            // 파일명을 ID 형식으로 생성
+            const fileName = PathSettings.getDefaultFileName();
 
             // 프론트매터 생성 (상속받은 태그만 포함)
             const noteContent = frontmatterManager.generateFrontmatter({
                 title: selectedText,
                 tags: nonDefaultTags
             }) + `\n- ${selectedText}`;
-
-            // 파일명으로 선택된 텍스트 사용
-            const fileName = `${selectedText}${PathSettings.DEFAULT_FILE_EXTENSION}`;
-            
-            // 같은 경로에 동일한 파일명이 있는지 확인
-            if (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
-                new Notice(`이미 "${selectedText}" 노트가 해당 경로에 존재합니다.`);
-                return;
-            }
 
             // 폴더 생성
             if (!(await this.app.vault.adapter.exists(folderPath))) {
@@ -78,8 +72,9 @@ export class LinkNote {
                 noteContent
             );
 
-            // 선택된 텍스트를 링크로 변경
-            editor.replaceSelection(`[[${folderPath}/${fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '')}|${selectedText}]]`);
+            // 선택된 텍스트를 링크로 변경 (ID만 사용)
+            const fileNameWithoutExtension = fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '');
+            editor.replaceSelection(`[[${fileNameWithoutExtension}|${selectedText}]]`);
 
             new Notice(`새 노트가 생성되었습니다: ${newFile.path}`);
             return newFile;
