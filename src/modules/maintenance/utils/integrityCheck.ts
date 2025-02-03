@@ -197,7 +197,9 @@ export class IntegrityCheck {
 
     private isValidFrontmatter(frontmatter: Record<string, any>, file: TFile): boolean {
         // DefaultFrontmatterConfig 인터페이스의 키들을 가져와서 검사
-        const requiredFields: (keyof DefaultFrontmatterConfig)[] = ['title', 'created', 'activated', 'potentiation', 'tags'];
+        const requiredFields: (keyof DefaultFrontmatterConfig)[] = [
+            'title', 'id', 'date', 'aliases', 'tags', 'potentiation', 'updated'
+        ];
         
         if (!requiredFields.every(field => frontmatter.hasOwnProperty(field))) {
             return false;
@@ -208,17 +210,25 @@ export class IntegrityCheck {
             return false;
         }
 
-        // created가 유효한 날짜 형식인지 확인 ('YYYY-MM-DD HH:mm' 형식)
-        if (!moment(frontmatter.created, 'YYYY-MM-DD HH:mm', true).isValid()) {
+        // id가 14자리 숫자인지 확인 (YYYYMMDDHHmmss 형식)
+        if (!/^\d{14}$/.test(frontmatter.id)) {
             return false;
         }
 
-        // activated가 유효한 날짜 형식인지 확인 ('YYYY-MM-DD HH:mm' 형식)
-        if (!moment(frontmatter.activated, 'YYYY-MM-DD HH:mm', true).isValid()) {
+        // date와 updated가 유효한 ISO 8601 형식인지 확인
+        if (!moment(frontmatter.date, moment.ISO_8601, true).isValid()) {
+            return false;
+        }
+        if (!moment(frontmatter.updated, moment.ISO_8601, true).isValid()) {
             return false;
         }
 
-        // tags 배열이 존재하는지 확인
+        // aliases가 배열인지 확인
+        if (!Array.isArray(frontmatter.aliases)) {
+            return false;
+        }
+
+        // tags 배열이 존재하고 'Initial'을 포함하는지 확인
         if (!Array.isArray(frontmatter.tags)) {
             return false;
         }

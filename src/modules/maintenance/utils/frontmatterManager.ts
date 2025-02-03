@@ -3,10 +3,12 @@ import type AILSSPlugin from 'main';
 
 export interface DefaultFrontmatterConfig {
     title: string;
-    created: string;
-    activated: string;
-    potentiation: number;
+    id: string;
+    date: string;
+    aliases: string[];
     tags: string[];
+    potentiation: number;
+    updated: string;
 }
 
 export class FrontmatterManager {
@@ -20,12 +22,15 @@ export class FrontmatterManager {
     constructor() {}
 
     private getDefaultFrontmatter(now: moment.Moment): DefaultFrontmatterConfig {
+        const timestamp = now.format('YYYYMMDDHHmmss');
         return {
             title: FrontmatterManager.DEFAULT_UNTITLED,
-            created: now.format('YYYY-MM-DD HH:mm'),
-            activated: now.format('YYYY-MM-DD HH:mm'),
+            id: timestamp,
+            date: now.toISOString().split('.')[0],
+            aliases: [],
+            tags: [...FrontmatterManager.DEFAULT_TAGS],
             potentiation: FrontmatterManager.INITIAL_POTENTIATION,
-            tags: [...FrontmatterManager.DEFAULT_TAGS]
+            updated: now.toISOString().split('.')[0]
         };
     }
 
@@ -36,10 +41,20 @@ export class FrontmatterManager {
             ? this.getDefaultFrontmatter(now)
             : this.getDefaultFrontmatter(now);
 
+        // created와 activated 필드를 새로운 필드명으로 매핑
+        if (additionalFields.created) {
+            additionalFields.date = moment(additionalFields.created).toISOString().split('.')[0];
+            delete additionalFields.created;
+        }
+        if (additionalFields.activated) {
+            additionalFields.updated = moment(additionalFields.activated).toISOString().split('.')[0];
+            delete additionalFields.activated;
+        }
+
         const mergedFields = { ...defaultFields, ...additionalFields };
         
         // 프론트매터 순서 정의
-        const orderedKeys = ['title', 'created', 'activated', 'potentiation', 'tags'];
+        const orderedKeys = ['title', 'id', 'date', 'aliases', 'tags', 'potentiation', 'updated'];
         
         let yaml = '---\n';
         // 정의된 순서대로 먼저 처리
