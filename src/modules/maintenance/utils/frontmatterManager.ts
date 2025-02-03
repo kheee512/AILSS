@@ -23,14 +23,16 @@ export class FrontmatterManager {
 
     private getDefaultFrontmatter(now: moment.Moment): DefaultFrontmatterConfig {
         const timestamp = now.format('YYYYMMDDHHmmss');
+        const koreanTime = now.add(9, 'hours');  // UTC+9 적용
+        
         return {
             title: FrontmatterManager.DEFAULT_UNTITLED,
             id: timestamp,
-            date: now.toISOString().split('.')[0],
+            date: koreanTime.toISOString().split('.')[0],
             aliases: [],
             tags: [...FrontmatterManager.DEFAULT_TAGS],
             potentiation: FrontmatterManager.INITIAL_POTENTIATION,
-            updated: now.toISOString().split('.')[0]
+            updated: koreanTime.toISOString().split('.')[0]
         };
     }
 
@@ -41,13 +43,19 @@ export class FrontmatterManager {
             ? this.getDefaultFrontmatter(now)
             : this.getDefaultFrontmatter(now);
 
-        // created와 activated 필드를 새로운 필드명으로 매핑
+        // created와 activated 필드를 새로운 필드명으로 매핑 (한국 시간대 적용)
         if (additionalFields.created) {
-            additionalFields.date = moment(additionalFields.created).toISOString().split('.')[0];
+            additionalFields.date = moment(additionalFields.created)
+                .add(9, 'hours')
+                .toISOString()
+                .split('.')[0];
             delete additionalFields.created;
         }
         if (additionalFields.activated) {
-            additionalFields.updated = moment(additionalFields.activated).toISOString().split('.')[0];
+            additionalFields.updated = moment(additionalFields.activated)
+                .add(9, 'hours')
+                .toISOString()
+                .split('.')[0];
             delete additionalFields.activated;
         }
 
