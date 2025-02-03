@@ -32,14 +32,8 @@ export class NewNote {
                 await this.app.vault.createFolder(folderPath);
             }
             
-            // 사용 가능한 파일명 찾기
-            let fileName = PathSettings.getDefaultFileName();
-            let counter = 1;
-            
-            while (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
-                fileName = PathSettings.getDefaultFileName(counter);
-                counter++;
-            }
+            // 현재 시간으로 파일명 생성
+            const fileName = PathSettings.getDefaultFileName();
             
             // 노트 생성
             const newFile = await this.app.vault.create(

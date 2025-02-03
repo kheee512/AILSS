@@ -1,6 +1,7 @@
-import { App, TFile } from 'obsidian';
+import { App} from 'obsidian';
 import { FileCountManager } from '../utils/fileCountManager';
 import type AILSSPlugin from 'main';
+import { moment } from 'obsidian';
 
 export class PathSettings {
     // 기본 경로 포맷
@@ -29,10 +30,9 @@ export class PathSettings {
     }
     
     // 파일명 생성 헬퍼 메서드
-    static getDefaultFileName(counter: number = 0): string {
-        return counter === 0 
-            ? `${PathSettings.DEFAULT_UNTITLED}${PathSettings.DEFAULT_FILE_EXTENSION}`
-            : `${PathSettings.DEFAULT_UNTITLED}-${counter}${PathSettings.DEFAULT_FILE_EXTENSION}`;
+    static getDefaultFileName(counter?: number): string {
+        const timestamp = moment().format('YYYYMMDDHHmmss');
+        return `${timestamp}${this.DEFAULT_FILE_EXTENSION}`;
     }
     
     // 노트 개수 확인 메서드 수정
