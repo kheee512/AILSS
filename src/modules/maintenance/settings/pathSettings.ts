@@ -11,15 +11,14 @@ export class PathSettings {
     static readonly DEACTIVATED_ROOT = 'deactivated';
     
     // 폴더 깊이 제한
-    static readonly MAX_FOLDER_DEPTH = 6; // deactivated/태그이름/YY-MM/DD/HH 구조 고려
+    static readonly MAX_FOLDER_DEPTH = 6; // deactivated/태그이름/YYYY/MM/DD 구조 고려
     
     // 파일 관련 설정
     static readonly DEFAULT_FILE_EXTENSION = '.md';
     static readonly DEFAULT_UNTITLED = 'untitled';
     
     // 최대 노트 개수 제한
-    // 성능 테스트 10,000 완료 (2025-01-25)
-    static readonly MAX_NOTES = 10000; 
+    static readonly MAX_NOTES = 16384; 
     
     // 경로 포맷 관련 정규식 수정
     static readonly PATH_REGEX = /^\d{4}\/\d{2}\/\d{2}$/;
