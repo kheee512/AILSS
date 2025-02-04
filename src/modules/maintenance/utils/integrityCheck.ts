@@ -268,6 +268,18 @@ export class IntegrityCheck {
             }
         }
 
+        // date와 id의 시간 일치 여부 검사
+        if (frontmatter.date && frontmatter.id) {
+            const dateFromISO = moment(frontmatter.date);
+            const dateFromId = moment(frontmatter.id, 'YYYYMMDDHHmmss');
+
+            if (dateFromISO.isValid() && dateFromId.isValid()) {
+                if (!dateFromISO.isSame(dateFromId)) {
+                    errors.push(`date(${frontmatter.date})와 id(${frontmatter.id})의 시간이 일치하지 않음`);
+                }
+            }
+        }
+
         return errors;
     }
 
