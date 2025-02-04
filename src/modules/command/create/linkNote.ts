@@ -59,7 +59,7 @@ export class LinkNote {
             const noteContent = frontmatterManager.generateFrontmatter({
                 title: selectedText,
                 tags: nonDefaultTags
-            }) + `\n- ${selectedText}`;
+            }, true) + `\n- ${selectedText}`;
 
             // 폴더 생성
             if (!(await this.app.vault.adapter.exists(folderPath))) {

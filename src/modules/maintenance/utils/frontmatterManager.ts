@@ -21,15 +21,16 @@ export class FrontmatterManager {
 
     constructor() {}
 
-    private getDefaultFrontmatter(now: moment.Moment): DefaultFrontmatterConfig {
+    private getDefaultFrontmatter(now: moment.Moment, isLinkNote: boolean = false): DefaultFrontmatterConfig {
         const timestamp = now.format('YYYYMMDDHHmmss');
         const koreanTime = now.add(9, 'hours');  // UTC+9 적용
+        const defaultTitle = FrontmatterManager.DEFAULT_UNTITLED;
         
         return {
-            title: FrontmatterManager.DEFAULT_UNTITLED,
+            title: defaultTitle,
             id: timestamp,
             date: koreanTime.toISOString().split('.')[0],
-            aliases: [],
+            aliases: isLinkNote ? [] : [defaultTitle],
             tags: [...FrontmatterManager.DEFAULT_TAGS],
             potentiation: FrontmatterManager.INITIAL_POTENTIATION,
             updated: koreanTime.toISOString().split('.')[0]
@@ -39,9 +40,7 @@ export class FrontmatterManager {
     // 프론트매터 생성 메서드
     generateFrontmatter(additionalFields: Record<string, any> = {}, isLinkNote: boolean = false): string {
         const now = moment();
-        const defaultFields = isLinkNote 
-            ? this.getDefaultFrontmatter(now)
-            : this.getDefaultFrontmatter(now);
+        const defaultFields = this.getDefaultFrontmatter(now, isLinkNote);
 
         // created와 activated 필드를 새로운 필드명으로 매핑 (한국 시간대 적용)
         if (additionalFields.created) {
@@ -57,6 +56,11 @@ export class FrontmatterManager {
                 .toISOString()
                 .split('.')[0];
             delete additionalFields.activated;
+        }
+
+        // 링크 노트인 경우 aliases에 title 값 추가
+        if (isLinkNote && additionalFields.title) {
+            additionalFields.aliases = [additionalFields.title];
         }
 
         const mergedFields = { ...defaultFields, ...additionalFields };

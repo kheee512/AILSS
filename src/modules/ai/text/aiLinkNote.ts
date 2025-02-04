@@ -78,7 +78,7 @@ export class AILinkNote {
             const noteContent = frontmatterManager.generateFrontmatter({
                 title: selectedText,
                 tags: nonDefaultTags
-            }) + `\n${aiContent}`;
+            }, true) + `\n${aiContent}`;
 
             // 폴더 생성
             if (!(await this.app.vault.adapter.exists(folderPath))) {

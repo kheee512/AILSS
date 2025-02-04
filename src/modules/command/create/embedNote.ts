@@ -80,7 +80,7 @@ export class EmbedNote {
             const noteContent = frontmatterManager.generateFrontmatter({
                 title: firstLineContent,
                 tags: nonDefaultTags
-            });
+            }, true);
 
             // 같은 경로에 동일한 파일명이 있는지 확인
             if (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
