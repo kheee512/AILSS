@@ -93,13 +93,10 @@ export class AILSSSettingTab extends PluginSettingTab {
             .setDesc('사용할 OpenAI 모델을 선택하세요')
             .addDropdown(dropdown => dropdown
                 .addOption('gpt-4o', 'GPT-4o')
-                .addOption('gpt-4o-audio-preview', 'GPT-4o Audio')
-                .addOption('gpt-4o-realtime-preview', 'GPT-4o Realtime')
                 .addOption('gpt-4o-mini', 'GPT-4o mini')
-                .addOption('gpt-4o-mini-audio-preview', 'GPT-4o mini Audio')
-                .addOption('gpt-4o-mini-realtime-preview', 'GPT-4o mini Realtime')
-                .addOption('o1', 'o1')
+                .addOption('o1-preview', 'o1-preview')
                 .addOption('o1-mini', 'o1-mini')
+                .addOption('o3-mini', 'o3-mini')
                 .setValue(this.plugin.settings.openAIModel)
                 .onChange(async (value) => {
                     this.plugin.settings.openAIModel = value;
