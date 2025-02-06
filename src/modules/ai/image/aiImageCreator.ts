@@ -192,14 +192,17 @@ export class AIImageCreator {
             const baseName = activeFile.basename;
             const nextIndex = await this.getNextImageIndex(baseName);
             
-            // 현재 노트와 같은 경로에 이미지 저장
-            const path = `${currentFolder}${currentFolder ? '/' : ''}${baseName}-${nextIndex}.png`;
-            console.log('이미지 저장 경로:', path);
+            // 실제 저장 경로는 현재 폴더 경로를 포함
+            const fullPath = `${currentFolder}${currentFolder ? '/' : ''}${baseName}-${nextIndex}.png`;
+            console.log('이미지 저장 경로:', fullPath);
             
-            await this.plugin.app.vault.createBinary(path, arrayBuffer);
+            await this.plugin.app.vault.createBinary(fullPath, arrayBuffer);
             
-            new Notice(`이미지가 저장되었습니다: ${path}`);
-            return path;
+            // 링크용 경로는 파일명만 반환
+            const linkPath = `${baseName}-${nextIndex}.png`;
+            
+            new Notice(`이미지가 저장되었습니다: ${fullPath}`);
+            return linkPath;
         } catch (error) {
             console.error('이미지 저장 중 오류:', error);
             throw new Error(`이미지 저장 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
