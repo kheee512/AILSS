@@ -74,13 +74,6 @@ export async function requestToAI(plugin: AILSSPlugin, prompt: AIPrompt): Promis
 }
 
 async function requestToOpenAI(apiKey: string, prompt: AIPrompt, model: string): Promise<string> {
-    //logAPIRequest('OpenAI', prompt);
-    //console.log('OpenAI 요청 정보:', {
-    //    systemPrompt: prompt.systemPrompt,
-    //    userPrompt: prompt.userPrompt,
-    //    temperature: prompt.temperature,
-    //    max_tokens: prompt.max_tokens
-    //});
     new Notice('OpenAI API 요청 시작');
     
     const url = 'https://api.openai.com/v1/chat/completions';
@@ -88,7 +81,16 @@ async function requestToOpenAI(apiKey: string, prompt: AIPrompt, model: string):
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
     };
-    const data = {
+    
+    // o 시리즈 모델인지 확인
+    const isOModel = model.startsWith('o');
+    
+    const data = isOModel ? {
+        model: model,
+        messages: [
+            { role: 'user', content: prompt.userPrompt }
+        ]
+    } : {
         model: model,
         messages: [
             { role: 'system', content: prompt.systemPrompt },
