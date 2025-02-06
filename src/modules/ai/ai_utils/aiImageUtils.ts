@@ -93,7 +93,7 @@ export class AIImageUtils {
         return matches.map(match => match[1]);
     }
 
-    static async processImageForClaude(app: App, imagePath: string): Promise<{
+    static async processImageForVision(app: App, imagePath: string): Promise<{
         base64Image: string,
         mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp",
         imageFile: TFile

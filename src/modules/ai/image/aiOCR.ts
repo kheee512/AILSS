@@ -1,9 +1,10 @@
-import { App, Notice, TFile } from 'obsidian';
+import { App, Notice, requestUrl } from 'obsidian';
 import AILSSPlugin from '../../../../main';
 import { AIImageUtils } from '../ai_utils/aiImageUtils';
 import { AIEditorUtils } from '../ai_utils/aiEditorUtils';
 import { AIBatchProcessor } from '../ai_utils/aiBatchProcessor';
 import Anthropic from '@anthropic-ai/sdk';
+
 
 export class AIOCR {
     private app: App;
@@ -63,9 +64,22 @@ export class AIOCR {
 
     private async analyzeImage(imagePath: string): Promise<string> {
         try {
-            const { base64Image, mediaType } = await AIImageUtils.processImageForClaude(this.app, imagePath);
+            const { base64Image, mediaType } = await AIImageUtils.processImageForVision(this.app, imagePath);
 
-            const systemPrompt = `당신은 이미지에서 텍스트를 완벽하게 추출하는 OCR 전문가입니다.
+            if (this.plugin.settings.selectedVisionModel === 'openai') {
+                return await this.analyzeWithOpenAI(base64Image);
+            } else {
+                return await this.analyzeWithClaude(base64Image, mediaType);
+            }
+
+        } catch (error: any) {
+            new Notice('이미지 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            return '이미지 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+        }
+    }
+
+    private async analyzeWithClaude(base64Image: string, mediaType: string): Promise<string> {
+        const systemPrompt = `당신은 이미지에서 텍스트를 완벽하게 추출하는 OCR 전문가입니다.
 
 주요 지침:
 1. 이미지에 포함된 모든 텍스트를 원본 형식 그대로 추출
@@ -77,7 +91,7 @@ export class AIOCR {
 7. 모든 수학 수식은 반드시 $ 기호로 감싸서 출력 (예: $1+1=2$)
 8. 복잡한 수식이나 여러 줄의 수식은 $$ 기호로 감싸서 출력`;
 
-            const userPrompt = `이미지에서 모든 텍스트를 추출해주세요.
+        const userPrompt = `이미지에서 모든 텍스트를 추출해주세요.
 
 다음 요소들을 정확히 포함해주세요:
 - 모든 텍스트 (손글씨, 인쇄물)
@@ -87,56 +101,86 @@ export class AIOCR {
 
 원본 텍스트만 출력하고 다른 설명은 추가하지 마세요.`;
 
-            const anthropic = new Anthropic({
-                apiKey: this.plugin.settings.claudeAPIKey,
-                dangerouslyAllowBrowser: true
-            });
+        const anthropic = new Anthropic({
+            apiKey: this.plugin.settings.claudeAPIKey,
+            dangerouslyAllowBrowser: true
+        });
 
-            console.log('Claude API 요청 시작');
-            const response = await anthropic.messages.create({
-                model: "claude-3-5-sonnet-20241022",
-                max_tokens: 4000,
-                temperature: 0.25,
-                system: systemPrompt,
-                messages: [{
+        const response = await anthropic.messages.create({
+            model: "claude-3-5-sonnet-20241022",
+            max_tokens: 4000,
+            temperature: 0.25,
+            system: systemPrompt,
+            messages: [{
+                role: "user",
+                content: [
+                    { type: "text", text: userPrompt },
+                    {
+                        type: "image",
+                        source: {
+                            type: "base64",
+                            media_type: mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+                            data: base64Image
+                        }
+                    }
+                ]
+            }]
+        });
+
+        if (response.content && response.content[0] && 'text' in response.content[0]) {
+            return response.content[0].text;
+        }
+
+        throw new Error('AI 응답을 받지 못했습니다.');
+    }
+
+    private async analyzeWithOpenAI(base64Image: string): Promise<string> {
+        const url = 'https://api.openai.com/v1/chat/completions';
+        const headers = {
+            'Authorization': `Bearer ${this.plugin.settings.openAIAPIKey}`,
+            'Content-Type': 'application/json'
+        };
+
+        const data = {
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: `당신은 OCR 전문가입니다. 이미지에서 모든 텍스트를 정확하게 추출하고, 수식은 LaTeX 형식으로 변환합니다. 
+                    모든 수학 수식은 $ 또는 $$ 기호로 감싸서 표현해야 합니다.`
+                },
+                {
                     role: "user",
                     content: [
-                        { type: "text", text: userPrompt },
                         {
-                            type: "image",
-                            source: {
-                                type: "base64",
-                                media_type: mediaType,
-                                data: base64Image
+                            type: "text",
+                            text: `이미지에서 모든 텍스트를 추출해주세요. 수식은 LaTeX로 변환하고, 줄바꿈과 단락 구분을 유지해주세요. 
+                            원본 텍스트만 출력하고 다른 설명은 추가하지 마세요.`
+                        },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: `data:image/jpeg;base64,${base64Image}`
                             }
                         }
                     ]
-                }]
-            });
+                }
+            ],
+            max_tokens: 4000,
+            temperature: 0.3
+        };
 
-            new Notice('Claude API 응답 수신 완료');
-            
-            const inputTokens = response.usage?.input_tokens ?? 0;
-            const outputTokens = response.usage?.output_tokens ?? 0;
-            const totalTokens = inputTokens + outputTokens;
-            const estimatedCost = (totalTokens / 1000) * 0.015;
+        const response = await requestUrl({
+            url: url,
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data)
+        });
 
-            new Notice(`토큰 사용량:
-입력: ${inputTokens}
-출력: ${outputTokens}
-총: ${totalTokens}
-비용: $${estimatedCost.toFixed(4)}`);
-
-            if (response.content && response.content[0] && 'text' in response.content[0]) {
-                return response.content[0].text;
-            }
-
-            throw new Error('AI 응답을 받지 못했습니다.');
-
-        } catch (error: any) {
-            //console.error('이미지 분석 상세 오류:', error);
-            new Notice('이미지 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-            return '이미지 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+        if (response.status === 200) {
+            return response.json.choices[0].message.content.trim();
         }
+
+        throw new Error('OpenAI API 응답을 받지 못했습니다.');
     }
 }

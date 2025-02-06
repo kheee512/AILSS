@@ -1,4 +1,4 @@
-import { Plugin, TFile } from 'obsidian';
+import { Plugin} from 'obsidian';
 import { NewNote } from './src/modules/command/create/newNote';
 import { LinkNote } from './src/modules/command/create/linkNote';
 import { UpdateTags } from './src/modules/command/update/updateTags';
@@ -21,6 +21,8 @@ import { GlobalGraphManager } from './src/modules/maintenance/utils/graph/global
 import { RenewNote } from './src/modules/command/move/renewNote';
 import { EmbedNote } from './src/modules/command/create/embedNote';
 import { RecoverNote } from './src/modules/command/create/recoverNote';
+import { AIImageCreator } from './src/modules/ai/image/aiImageCreator';
+import { AIProcess } from './src/modules/ai/text/aiProcess';
 
 
 
@@ -51,6 +53,9 @@ export default class AILSSPlugin extends Plugin {
 	private renewNoteManager: RenewNote;
 	private embedNoteManager: EmbedNote;
 	private recoverNoteManager: RecoverNote;
+	private aiImageCreator: AIImageCreator;
+	private aiProcess: AIProcess;
+
 
 
 	async onload() {
@@ -96,6 +101,12 @@ export default class AILSSPlugin extends Plugin {
 		// EmbedNote와 RecoverNote 초기화
 		this.embedNoteManager = new EmbedNote(this.app, this);
 		this.recoverNoteManager = new RecoverNote(this.app, this);
+
+		// AI 이미지 생성기 초기화
+		this.aiImageCreator = new AIImageCreator(this);
+
+		// AI Process 초기화
+		this.aiProcess = new AIProcess(this.app, this);
 
 		// 리본 메뉴 아이콘들 업데이트
 		this.addRibbonIcon('plus', '노트 생성', () => {
@@ -172,6 +183,14 @@ export default class AILSSPlugin extends Plugin {
 
 		this.addRibbonIcon('rotate-ccw', '노트 복구', () => {
 			this.recoverNoteManager.recoverNote();
+		});
+
+		this.addRibbonIcon('image-plus', 'AI 이미지 생성', () => {
+			this.aiImageCreator.main();
+		});
+
+		this.addRibbonIcon('terminal', 'AI 명령 처리', () => {
+			this.aiProcess.main();
 		});
 
 		// 명령어 추가
@@ -308,6 +327,19 @@ export default class AILSSPlugin extends Plugin {
 			editorCallback: () => this.deleteAttachmentManager.deleteLink()
 		});
 
+		this.addCommand({
+			id: 'generate-ai-image',
+			name: 'AI 이미지 생성',
+			icon: 'image-plus',
+			editorCallback: () => this.aiImageCreator.main()
+		});
+
+		this.addCommand({
+			id: 'process-ai-command',
+			name: 'AI 명령 처리',
+			icon: 'terminal',
+			editorCallback: () => this.aiProcess.main()
+		});
 	}
 
 	onunload() {

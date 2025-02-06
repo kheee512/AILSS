@@ -8,9 +8,11 @@ export interface AILSSSettings {
     claudeAPIKey: string;
     perplexityAPIKey: string;
     selectedAIModel: 'openai' | 'claude' | 'perplexity';
+    selectedVisionModel: 'claude' | 'openai';
     openAIModel: string;
     claudeModel: string;
     perplexityModel: string;
+    dalleModel: 'dall-e-2' | 'dall-e-3';
 }
 
 export const DEFAULT_SETTINGS: AILSSSettings = {
@@ -18,9 +20,11 @@ export const DEFAULT_SETTINGS: AILSSSettings = {
     claudeAPIKey: '',
     perplexityAPIKey: '',
     selectedAIModel: 'claude',
+    selectedVisionModel: 'claude',
     openAIModel: 'gpt-4o',
     claudeModel: 'claude-3-5-sonnet-20241022',
     perplexityModel: 'sonar-pro',
+    dalleModel: 'dall-e-3',
 };
 
 export class AILSSSettingTab extends PluginSettingTab {
@@ -81,6 +85,30 @@ export class AILSSSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.selectedAIModel)
                 .onChange(async (value: 'openai' | 'claude' | 'perplexity') => {
                     this.plugin.settings.selectedAIModel = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Vision 모델 선택')
+            .setDesc('이미지 분석에 사용할 AI 모델을 선택하세요')
+            .addDropdown(dropdown => dropdown
+                .addOption('claude', 'Claude Vision')
+                .addOption('openai', 'GPT-4 Vision')
+                .setValue(this.plugin.settings.selectedVisionModel)
+                .onChange(async (value: 'claude' | 'openai') => {
+                    this.plugin.settings.selectedVisionModel = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('DALL-E 모델')
+            .setDesc('이미지 생성에 사용할 DALL-E 모델을 선택하세요')
+            .addDropdown(dropdown => dropdown
+                .addOption('dall-e-2', 'DALL-E 2')
+                .addOption('dall-e-3', 'DALL-E 3')
+                .setValue(this.plugin.settings.dalleModel)
+                .onChange(async (value: 'dall-e-2' | 'dall-e-3') => {
+                    this.plugin.settings.dalleModel = value;
                     await this.plugin.saveSettings();
                 }));
 

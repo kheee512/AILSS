@@ -5,6 +5,7 @@ import { AIEditorUtils } from '../ai_utils/aiEditorUtils';
 import { AIBatchProcessor } from '../ai_utils/aiBatchProcessor';
 import { AIOCR } from './aiOCR';
 import Anthropic from '@anthropic-ai/sdk';
+import { requestUrl } from 'obsidian';
 
 export class AIImageAnalyzer {
     private app: App;
@@ -62,9 +63,21 @@ export class AIImageAnalyzer {
 
     private async analyzeImage(imagePath: string, instruction: string): Promise<string> {
         try {
-            const { base64Image, mediaType } = await AIImageUtils.processImageForClaude(this.app, imagePath);
+            const { base64Image, mediaType } = await AIImageUtils.processImageForVision(this.app, imagePath);
 
-            const systemPrompt = `당신은 이미지 분석 전문가입니다.
+            if (this.plugin.settings.selectedVisionModel === 'openai') {
+                return await this.analyzeWithOpenAI(base64Image, instruction);
+            } else {
+                return await this.analyzeWithClaude(base64Image, mediaType, instruction);
+            }
+        } catch (error) {
+            new Notice('이미지 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            return '이미지 분석 중 오류가 발생했습니다.';
+        }
+    }
+
+    private async analyzeWithClaude(base64Image: string, mediaType: string, instruction: string): Promise<string> {
+        const systemPrompt = `당신은 이미지 분석 전문가입니다.
 사용자의 지시사항에 따라 이미지를 정확하게 분석하고 관련 정보를 추출합니다.
 
 주요 지침:
@@ -75,46 +88,89 @@ export class AIImageAnalyzer {
 6. 복잡한 수식이나 여러 줄의 수식은 $$ 기호로 감싸서 출력
 7. 분석 결과는 객관적이고 사실에 기반`;
 
-            const userPrompt = `다음 지시사항에 따라 이미지를 분석해주세요:
+        const userPrompt = `다음 지시사항에 따라 이미지를 분석해주세요:
 ${instruction}
 
 분석 결과만 출력하고 다른 설명은 추가하지 마세요.`;
 
-            const anthropic = new Anthropic({
-                apiKey: this.plugin.settings.claudeAPIKey,
-                dangerouslyAllowBrowser: true
-            });
+        const anthropic = new Anthropic({
+            apiKey: this.plugin.settings.claudeAPIKey,
+            dangerouslyAllowBrowser: true
+        });
 
-            const response = await anthropic.messages.create({
-                model: "claude-3-5-sonnet-20241022",
-                max_tokens: 4000,
-                temperature: 0.3,
-                system: systemPrompt,
-                messages: [{
+        const response = await anthropic.messages.create({
+            model: "claude-3-5-sonnet-20241022",
+            max_tokens: 4000,
+            temperature: 0.3,
+            system: systemPrompt,
+            messages: [{
+                role: "user",
+                content: [
+                    { type: "text", text: userPrompt },
+                    {
+                        type: "image",
+                        source: {
+                            type: "base64",
+                            media_type: mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+                            data: base64Image
+                        }
+                    }
+                ]
+            }]
+        });
+
+        if (response.content && response.content[0] && 'text' in response.content[0]) {
+            return response.content[0].text;
+        }
+
+        throw new Error('AI 응답을 받지 못했습니다.');
+    }
+
+    private async analyzeWithOpenAI(base64Image: string, instruction: string): Promise<string> {
+        const url = 'https://api.openai.com/v1/chat/completions';
+        const headers = {
+            'Authorization': `Bearer ${this.plugin.settings.openAIAPIKey}`,
+            'Content-Type': 'application/json'
+        };
+
+        const data = {
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: `당신은 이미지 분석 전문가입니다. 사용자의 지시사항에 따라 이미지를 정확하게 분석하고 관련 정보를 추출합니다.`
+                },
+                {
                     role: "user",
                     content: [
-                        { type: "text", text: userPrompt },
                         {
-                            type: "image",
-                            source: {
-                                type: "base64",
-                                media_type: mediaType,
-                                data: base64Image
+                            type: "text",
+                            text: `다음 지시사항에 따라 이미지를 분석해주세요:\n${instruction}\n\n분석 결과만 출력하고 다른 설명은 추가하지 마세요.`
+                        },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: `data:image/jpeg;base64,${base64Image}`
                             }
                         }
                     ]
-                }]
-            });
+                }
+            ],
+            max_tokens: 4000,
+            temperature: 0.3
+        };
 
-            if (response.content && response.content[0] && 'text' in response.content[0]) {
-                return response.content[0].text;
-            }
+        const response = await requestUrl({
+            url: url,
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data)
+        });
 
-            throw new Error('AI 응답을 받지 못했습니다.');
-
-        } catch (error) {
-            new Notice('이미지 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-            return '이미지 분석 중 오류가 발생했습니다.';
+        if (response.status === 200) {
+            return response.json.choices[0].message.content.trim();
         }
+
+        throw new Error('OpenAI API 응답을 받지 못했습니다.');
     }
 } 
