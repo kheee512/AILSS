@@ -49,6 +49,11 @@ export class AILSSSettingTab extends PluginSettingTab {
         containerEl.createEl('h2', { text: 'AI 모델 설정' });
         const aiSettingsContainer = containerEl.createDiv('ai-settings-section');
         this.addAISettings(aiSettingsContainer);
+
+        // API 설정 섹션
+        containerEl.createEl('h2', { text: 'API 설정' });
+        const apiSettingsContainer = containerEl.createDiv('api-settings-section');
+        this.addAPISettings(apiSettingsContainer);
     }
 
     private async addStatistics(containerEl: HTMLElement) {
@@ -113,9 +118,10 @@ export class AILSSSettingTab extends PluginSettingTab {
                 }));
 
         containerEl.createEl('hr');
+    }
 
+    private addAPISettings(containerEl: HTMLElement) {
         this.addMaskedApiKeySetting(containerEl, 'OpenAI API Key', 'openAIAPIKey');
-        
         new Setting(containerEl)
             .setName('OpenAI 모델')
             .setDesc('사용할 OpenAI 모델을 선택하세요')
@@ -133,7 +139,6 @@ export class AILSSSettingTab extends PluginSettingTab {
                 }));
 
         this.addMaskedApiKeySetting(containerEl, 'Claude API Key', 'claudeAPIKey');
-
         new Setting(containerEl)
             .setName('Claude 모델')
             .setDesc('사용할 Claude 모델을 선택하세요')
@@ -147,7 +152,6 @@ export class AILSSSettingTab extends PluginSettingTab {
                 }));
 
         this.addMaskedApiKeySetting(containerEl, 'Perplexity API Key', 'perplexityAPIKey');
-
         new Setting(containerEl)
             .setName('Perplexity 모델')
             .setDesc('사용할 Perplexity 모델을 선택하세요')
