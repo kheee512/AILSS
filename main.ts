@@ -23,6 +23,7 @@ import { EmbedNote } from './src/modules/command/create/embedNote';
 import { RecoverNote } from './src/modules/command/create/recoverNote';
 import { AIImageCreator } from './src/modules/ai/image/aiImageCreator';
 import { AIProcess } from './src/modules/ai/text/aiProcess';
+import { AIReformat } from './src/modules/ai/text/aiReformat';
 
 
 
@@ -55,6 +56,7 @@ export default class AILSSPlugin extends Plugin {
 	private recoverNoteManager: RecoverNote;
 	private aiImageCreator: AIImageCreator;
 	private aiProcess: AIProcess;
+	private aiReformat: AIReformat;
 
 
 
@@ -107,6 +109,9 @@ export default class AILSSPlugin extends Plugin {
 
 		// AI Process 초기화
 		this.aiProcess = new AIProcess(this.app, this);
+
+		// AI Reformat 초기화
+		this.aiReformat = new AIReformat(this.app, this);
 
 		// 리본 메뉴 아이콘들 업데이트
 		this.addRibbonIcon('plus', '노트 생성', () => {
@@ -191,6 +196,10 @@ export default class AILSSPlugin extends Plugin {
 
 		this.addRibbonIcon('terminal', 'AI 명령 처리', () => {
 			this.aiProcess.main();
+		});
+
+		this.addRibbonIcon('list', '텍스트 재구성', () => {
+			this.aiReformat.main();
 		});
 
 		// 명령어 추가
@@ -339,6 +348,13 @@ export default class AILSSPlugin extends Plugin {
 			name: 'AI 명령 처리',
 			icon: 'terminal',
 			editorCallback: () => this.aiProcess.main()
+		});
+
+		this.addCommand({
+			id: 'reformat-text',
+			name: '텍스트 재구성',
+			icon: 'list',
+			editorCallback: () => this.aiReformat.main()
 		});
 	}
 
