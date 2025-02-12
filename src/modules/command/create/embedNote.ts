@@ -99,11 +99,11 @@ export class EmbedNote {
                 `${noteContent}\n${selectedText}`
             );
 
-            // 선택된 텍스트만 링크로 변경
+            // 선택된 텍스트의 첫 줄만 링크로 변경
             const linkText = editor.getRange(
                 { line: cursor.line, ch: cursor.ch },
                 { line: cursor.line, ch: cursor.ch + firstLineContent.length }
-            );
+            ).split('\n')[0];  // 첫 줄만 사용
             
             const beforeText = firstLine.substring(0, cursor.ch);
             const afterText = firstLine.substring(cursor.ch + linkText.length);
