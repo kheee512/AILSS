@@ -99,11 +99,16 @@ export class EmbedNote {
                 `${noteContent}\n${selectedText}`
             );
 
-            // 첫 번째 줄만 링크로 변경하고 나머지는 그대로 두기
+            // 선택된 텍스트만 링크로 변경
+            const linkText = editor.getRange(
+                { line: cursor.line, ch: cursor.ch },
+                { line: cursor.line, ch: cursor.ch + firstLineContent.length }
+            );
+            
             const beforeText = firstLine.substring(0, cursor.ch);
-            const linkText = lines[0].trim().replace(/^[-*+]\s+/, '');
+            const afterText = firstLine.substring(cursor.ch + linkText.length);
             const fileNameWithoutExtension = fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '');
-            const newFirstLine = `${beforeText}[[${fileNameWithoutExtension}|${linkText}]]`;
+            const newFirstLine = `${beforeText}[[${fileNameWithoutExtension}|${linkText}]]${afterText}`;
             
             editor.setLine(cursor.line, newFirstLine);
 
