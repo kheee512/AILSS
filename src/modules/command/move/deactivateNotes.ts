@@ -134,9 +134,18 @@ export class DeactivateNotes {
             const cache = this.app.metadataCache.getFileCache(file);
             const frontmatterTags = cache?.frontmatter?.tags;
             
-            if (Array.isArray(frontmatterTags) && 
-                frontmatterTags.some(tag => normalizedTags.includes(tag))) {
-                notesToDeactivate.add(file);
+            if (Array.isArray(frontmatterTags)) {
+                // 각 노트의 태그가 입력된 태그와 정확히 일치하거나
+                // 입력된 태그 + '/'로 시작하는 경우를 포함하면 노트를 추가
+                if (
+                    frontmatterTags.some((fileTag: string) =>
+                        normalizedTags.some(normalized =>
+                            fileTag === normalized || fileTag.startsWith(`${normalized}/`)
+                        )
+                    )
+                ) {
+                    notesToDeactivate.add(file);
+                }
             }
         }
         
