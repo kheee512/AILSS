@@ -165,17 +165,13 @@ export class ActivateNotes {
                         await this.app.vault.delete(child);
                     }
                 } else if (child instanceof TFile) {
-                    // 파일이 있으면 폴더가 비어있지 않음
                     return false;
                 }
             }
-            // 모든 하위 항목 처리 후 현재 폴더의 children을 다시 확인
             return currentFolder.children.length === 0;
         };
 
-        const isRootEmpty = await processFolder(rootFolder);
-        if (isRootEmpty) {
-            await this.app.vault.delete(rootFolder);
-        }
+        // 루트 폴더의 하위 폴더들만 처리하고 루트 폴더 자체는 삭제하지 않음
+        await processFolder(rootFolder);
     }
 }
