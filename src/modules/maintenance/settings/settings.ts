@@ -156,6 +156,8 @@ export class AILSSSettingTab extends PluginSettingTab {
             .setName('Perplexity 모델')
             .setDesc('사용할 Perplexity 모델을 선택하세요')
             .addDropdown(dropdown => dropdown
+                .addOption('sonar-reasoning-pro', 'Sonar Reasoning Pro')
+                .addOption('sonar-reasoning', 'Sonar Reasoning')
                 .addOption('sonar-pro', 'Sonar Pro')
                 .addOption('sonar', 'Sonar')
                 .setValue(this.plugin.settings.perplexityModel)
