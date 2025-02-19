@@ -62,8 +62,10 @@ export class CleanEmptyFolders {
             }
         }
 
-        // 빈 폴더이고 루트 폴더가 아닌 경우 목록에 추가
-        if (isEmpty && folder.path !== '/') {
+        // 빈 폴더이고 루트 폴더가 아니며 deactivated 루트 폴더도 아닌 경우에만 목록에 추가
+        if (isEmpty && 
+            folder.path !== '/' && 
+            folder.path !== CleanEmptyFolders.DEACTIVATED_ROOT) {
             emptyFolders.push(folder);
         }
 
