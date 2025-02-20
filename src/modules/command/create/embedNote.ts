@@ -94,26 +94,28 @@ export class EmbedNote {
             }
 
             // 노트 생성
-            const newFile = await this.app.vault.create(
-                `${folderPath}/${fileName}`,
-                `${noteContent}\n${selectedText}`
-            );
+            const { file, fileName: createdFileName } = await PathSettings.createNote({
+                app: this.app,
+                frontmatterConfig: {
+                    title: firstLineContent,
+                    tags: nonDefaultTags
+                },
+                content: selectedText,
+                isInherited: true
+            });
 
             // 선택된 텍스트의 첫 줄만 링크로 변경
-            const linkText = editor.getRange(
-                { line: cursor.line, ch: cursor.ch },
-                { line: cursor.line, ch: cursor.ch + firstLineContent.length }
-            ).split('\n')[0];  // 첫 줄만 사용
+            const linkText = selectedText.split('\n')[0];  // 첫 줄만 사용
             
             const beforeText = firstLine.substring(0, cursor.ch);
             const afterText = firstLine.substring(cursor.ch + linkText.length);
-            const fileNameWithoutExtension = fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '');
+            const fileNameWithoutExtension = createdFileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '');
             const newFirstLine = `${beforeText}[[${fileNameWithoutExtension}|${linkText}]]${afterText}`;
             
             editor.setLine(cursor.line, newFirstLine);
 
-            new Notice(`새 노트가 생성되었습니다: ${newFile.path}`);
-            return newFile;
+            new Notice(`새 노트가 생성되었습니다: ${file.path}`);
+            return file;
         } catch (error) {
             new Notice('노트 생성 중 오류가 발생했습니다.');
             console.error('Error creating new note:', error);

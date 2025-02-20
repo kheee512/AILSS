@@ -12,38 +12,23 @@ export class NewNote {
     ) {}
 
     async createNewNote() {
-        // 노트 개수 제한 확인
-        if (!(await PathSettings.checkNoteLimit(this.app, this.plugin))) {
-            new Notice(`노트 개수가 최대 제한(${PathSettings.MAX_NOTES}개)에 도달했습니다.`);
-            return;
-        }
-
-        const now = moment();
-        
-        // 폴더 경로 생성 (YY/MM/DD/HH/)
-        const folderPath = PathSettings.getTimestampedPath(now);
-
-        const frontmatterManager = new FrontmatterManager();
-        const noteContent = frontmatterManager.generateFrontmatter({}, false) + '\n- ';
-
         try {
-            // 폴더가 존재하지 않을 때만 생성
-            if (!(await this.app.vault.adapter.exists(folderPath))) {
-                await this.app.vault.createFolder(folderPath);
+            // 노트 개수 제한 확인
+            if (!(await PathSettings.checkNoteLimit(this.app, this.plugin))) {
+                new Notice(`노트 개수가 최대 제한(${PathSettings.MAX_NOTES}개)에 도달했습니다.`);
+                return;
             }
-            
-            // 현재 시간으로 파일명 생성
-            const fileName = PathSettings.getDefaultFileName();
-            
-            // 노트 생성
-            const newFile = await this.app.vault.create(
-                `${folderPath}/${fileName}`,
-                noteContent
-            );
 
-            // 항상 새 탭에서 파일 열기
+            const { file } = await PathSettings.createNote({
+                app: this.app,
+                frontmatterConfig: {},
+                content: '- ',
+                isInherited: false
+            });
+
+            // 새 탭에서 파일 열기
             const leaf = this.app.workspace.getLeaf('tab');
-            await leaf.openFile(newFile);
+            await leaf.openFile(file);
             
             // 커서를 불렛포인트 뒤로 이동
             const view = leaf.view as MarkdownView;
@@ -52,9 +37,9 @@ export class NewNote {
                 const lineLength = view.editor.getLine(lastLine).length;
                 view.editor.setCursor({ line: lastLine, ch: lineLength });
             }
-            
+
             new Notice(`새 노트가 생성되었습니다`);
-            return newFile;
+            return file;
         } catch (error) {
             new Notice('노트 생성 중 오류가 발생했습니다.');
             console.error('Error creating new note:', error);

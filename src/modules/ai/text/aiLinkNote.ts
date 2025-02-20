@@ -74,22 +74,16 @@ export class AILinkNote {
             // 노트 생성 준비
             const nonDefaultTags = FrontmatterManager.getNonDefaultTags(currentTags);
 
-            // 프론트매터 생성 (기본 태그 제외하고 상속받은 태그만 포함)
-            const noteContent = frontmatterManager.generateFrontmatter({
-                title: selectedText,
-                tags: nonDefaultTags
-            }, true) + `\n${aiContent}`;
-
-            // 폴더 생성
-            if (!(await this.app.vault.adapter.exists(folderPath))) {
-                await this.app.vault.createFolder(folderPath);
-            }
-
             // 노트 생성
-            const newFile = await this.app.vault.create(
-                `${folderPath}/${fileName}`,
-                noteContent
-            );
+            const { file, fileName: newFileName, timestamp } = await PathSettings.createNote({
+                app: this.app,
+                frontmatterConfig: {
+                    title: selectedText,
+                    tags: nonDefaultTags
+                },
+                content: aiContent,
+                isInherited: true
+            });
 
             // 노트 생성 후 정확한 위치에 링크 삽입
             const fromPos = editor.offsetToPos(selectionStart);
@@ -100,15 +94,15 @@ export class AILinkNote {
             const textAtPosition = editor.getSelection().trim();
             
             if (textAtPosition === selectedText) {
-                const fileNameWithoutExtension = fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '');
+                const fileNameWithoutExtension = newFileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '');
                 editor.replaceSelection(`[[${fileNameWithoutExtension}|${selectedText}]]`);
             } else {
                 new Notice('선택한 텍스트의 위치가 변경되었습니다. 수동으로 링크를 삽입해주세요.');
                 console.log('Original text:', selectedText, 'Text at position:', textAtPosition);
             }
 
-            new Notice(`AI 분석이 포함된 새 노트가 생성되었습니다: ${newFile.path}`);
-            return newFile;
+            new Notice(`AI 분석이 포함된 새 노트가 생성되었습니다: ${file.path}`);
+            return file;
         } catch (error) {
             new Notice('노트 생성 중 오류가 발생했습니다.');
             console.error('Error creating AI note:', error);

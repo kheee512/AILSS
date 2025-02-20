@@ -1,7 +1,7 @@
-import { App} from 'obsidian';
+import { App, moment, TFile } from 'obsidian';
 import { FileCountManager } from '../utils/fileCountManager';
 import type AILSSPlugin from 'main';
-import { moment } from 'obsidian';
+import { FrontmatterManager } from '../utils/frontmatterManager';
 
 export class PathSettings {
     // 기본 경로 포맷
@@ -23,6 +23,93 @@ export class PathSettings {
     // 경로 포맷 관련 정규식 수정
     static readonly PATH_REGEX = /^\d{4}\/\d{2}\/\d{2}$/;
     
+    /**
+     * 노트 생성을 위한 통합 유틸리티 메서드
+     */
+    static async createNote(params: {
+        app: App,
+        frontmatterConfig: Record<string, any>,
+        content: string,
+        timestamp?: moment.Moment,
+        isInherited?: boolean
+    }): Promise<{
+        file: TFile,
+        fileName: string,
+        timestamp: moment.Moment
+    }> {
+        const {
+            app,
+            frontmatterConfig,
+            content,
+            timestamp: initialTimestamp = moment(),
+            isInherited = false
+        } = params;
+
+        // 유니크한 파일명과 타임스탬프 생성
+        const { fileName, timestamp } = await this.generateUniqueFileInfo(
+            app,
+            initialTimestamp
+        );
+
+        // 기존 PATH_FORMAT 사용하여 폴더 경로 생성
+        const folderPath = this.getTimestampedPath(timestamp);
+
+        // 폴더 생성
+        if (!(await app.vault.adapter.exists(folderPath))) {
+            await app.vault.createFolder(folderPath);
+        }
+
+        // frontmatter 생성
+        const frontmatterManager = new FrontmatterManager();
+        const noteContent = frontmatterManager.generateFrontmatter({
+            ...frontmatterConfig,
+            timestamp
+        }, isInherited) + `\n${content}`;
+
+        // 노트 생성
+        const file = await app.vault.create(
+            `${folderPath}/${fileName}`,
+            noteContent
+        );
+
+        return {
+            file,
+            fileName,
+            timestamp
+        };
+    }
+
+    /**
+     * 유니크한 파일명과 타임스탬프 생성
+     */
+    private static async generateUniqueFileInfo(
+        app: App,
+        initialTimestamp: moment.Moment
+    ): Promise<{
+        fileName: string,
+        timestamp: moment.Moment
+    }> {
+        let currentTimestamp = moment(initialTimestamp);
+        let fileName: string;
+        
+        do {
+            fileName = `${currentTimestamp.format('YYYYMMDDHHmmss')}${this.DEFAULT_FILE_EXTENSION}`;
+            const folderPath = this.getTimestampedPath(currentTimestamp);
+            const fullPath = `${folderPath}/${fileName}`;
+
+            if (!(await app.vault.adapter.exists(fullPath))) {
+                break;
+            }
+
+            currentTimestamp = currentTimestamp.add(1, 'second');
+        } while (true);
+
+        return {
+            fileName,
+            timestamp: currentTimestamp
+        };
+    }
+
     // 경로 생성 헬퍼 메서드
     static getTimestampedPath(date: moment.Moment): string {
         return date.format(PathSettings.PATH_FORMAT);
