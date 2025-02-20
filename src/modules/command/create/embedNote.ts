@@ -104,15 +104,14 @@ export class EmbedNote {
                 isInherited: true
             });
 
-            // 선택된 텍스트의 첫 줄만 링크로 변경
-            const linkText = selectedText.split('\n')[0].replace(/^[-*+]\s+/, '');  // 리스트 마커 제거
+            // 선택된 텍스트만 링크로 변경
+            const selection = editor.getSelection();
+            const cleanedSelection = selection.replace(/^[-*+]\s+/, '');  // 리스트 마커 제거
             
-            const beforeText = firstLine.substring(0, cursor.ch);
-            const afterText = firstLine.substring(cursor.ch + linkText.length);
             const fileNameWithoutExtension = createdFileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '');
-            const newFirstLine = `${beforeText}[[${fileNameWithoutExtension}|${linkText}]]${afterText}`;
+            const newLink = `[[${fileNameWithoutExtension}|${cleanedSelection}]]`;
             
-            editor.setLine(cursor.line, newFirstLine);
+            editor.replaceSelection(newLink);
 
             new Notice(`새 노트가 생성되었습니다: ${file.path}`);
             return file;
