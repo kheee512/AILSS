@@ -15,12 +15,6 @@ export class CleanEmptyFolders {
         try {
             const emptyFolders = await this.findEmptyFolders();
             
-            // deactivated 폴더 특별 처리
-            const deactivatedFolder = this.app.vault.getAbstractFileByPath(CleanEmptyFolders.DEACTIVATED_ROOT);
-            if (deactivatedFolder instanceof TFolder && deactivatedFolder.children.length === 0) {
-                emptyFolders.push(deactivatedFolder);
-            }
-
             if (emptyFolders.length === 0) {
                 new Notice("삭제할 빈 폴더가 없습니다.");
                 return;
@@ -45,27 +39,18 @@ export class CleanEmptyFolders {
 
     private async processFolder(folder: TFolder, depth: number, emptyFolders: TFolder[]): Promise<boolean> {
         if (depth >= this.MAX_DEPTH) return false;
-
-        let isEmpty = true;
-        const children = folder.children;
-
-        // 하위 폴더 먼저 처리
-        for (const child of children) {
-            if (child instanceof TFolder) {
-                const childIsEmpty = await this.processFolder(child, depth + 1, emptyFolders);
-                if (!childIsEmpty) {
-                    isEmpty = false;
-                }
-            } else {
-                // 파일이 있으면 폴더가 비어있지 않음
-                isEmpty = false;
-            }
+        
+        // deactivated 폴더는 처리하지 않음
+        if (folder.path === CleanEmptyFolders.DEACTIVATED_ROOT) {
+            return false;
         }
 
-        // 빈 폴더이고 루트 폴더가 아니며 deactivated 루트 폴더도 아닌 경우에만 목록에 추가
-        if (isEmpty && 
-            folder.path !== '/' && 
-            folder.path !== CleanEmptyFolders.DEACTIVATED_ROOT) {
+        // 폴더의 실제 내용물을 확인
+        const files = await this.app.vault.adapter.list(folder.path);
+        const isEmpty = files.files.length === 0 && files.folders.length === 0;
+
+        // 빈 폴더이고 루트 폴더가 아닌 경우에만 목록에 추가
+        if (isEmpty && folder.path !== '/') {
             emptyFolders.push(folder);
         }
 
