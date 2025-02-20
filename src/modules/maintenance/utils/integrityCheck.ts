@@ -139,7 +139,8 @@ export class IntegrityCheck {
             }
         }
 
-        if (!hasValidContent && folder.path !== '/') {
+        // deactivated 루트 폴더나 루트 폴더('/')는 빈 폴더 검사에서 제외
+        if (!hasValidContent && folder.path !== '/' && folder.path !== PathSettings.DEACTIVATED_ROOT) {
             report.emptyFolders.push(folder.path);
         }
 
