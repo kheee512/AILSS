@@ -105,7 +105,7 @@ export class EmbedNote {
             });
 
             // 선택된 텍스트의 첫 줄만 링크로 변경
-            const linkText = selectedText.split('\n')[0];  // 첫 줄만 사용
+            const linkText = selectedText.split('\n')[0].replace(/^[-*+]\s+/, '');  // 리스트 마커 제거
             
             const beforeText = firstLine.substring(0, cursor.ch);
             const afterText = firstLine.substring(cursor.ch + linkText.length);
