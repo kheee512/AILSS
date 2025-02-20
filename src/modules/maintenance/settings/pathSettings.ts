@@ -59,12 +59,12 @@ export class PathSettings {
             await app.vault.createFolder(folderPath);
         }
 
-        // frontmatter 생성
+        // frontmatter 생성 (timestamp는 제외)
         const frontmatterManager = new FrontmatterManager();
-        const noteContent = frontmatterManager.generateFrontmatter({
-            ...frontmatterConfig,
-            timestamp
-        }, isInherited) + `\n${content}`;
+        const noteContent = frontmatterManager.generateFrontmatter(
+            frontmatterConfig,
+            isInherited
+        ) + `\n${content}`;
 
         // 노트 생성
         const file = await app.vault.create(
