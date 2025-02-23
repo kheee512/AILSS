@@ -2,16 +2,19 @@ import { App, Notice, TFile } from 'obsidian';
 import type AILSSPlugin from '../../../../main';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
 import { CleanEmptyFolders } from '../../maintenance/utils/cleanEmptyFolders';
+import { RemoveNoteLinks } from '../../maintenance/utils/removeNoteLinks';
 
 export class DeleteCurrentNote {
     private app: App;
     private plugin: AILSSPlugin;
     private cleanEmptyFolders: CleanEmptyFolders;
+    private removeNoteLinks: RemoveNoteLinks;
 
     constructor(app: App, plugin: AILSSPlugin) {
         this.app = app;
         this.plugin = plugin;
         this.cleanEmptyFolders = new CleanEmptyFolders(this.app, this.plugin);
+        this.removeNoteLinks = new RemoveNoteLinks(this.app);
     }
 
     async deleteNote(): Promise<void> {
@@ -54,16 +57,8 @@ export class DeleteCurrentNote {
                 return;
             }
 
-            // 현재 노트를 참조하는 모든 노트 찾기
-            const linkedFiles = this.app.metadataCache.resolvedLinks;
-            for (const [sourcePath, links] of Object.entries(linkedFiles)) {
-                if (links[currentFile.path]) {
-                    const sourceFile = this.app.vault.getAbstractFileByPath(sourcePath);
-                    if (sourceFile instanceof TFile) {
-                        await this.removeLinksToFile(sourceFile, currentFile.basename);
-                    }
-                }
-            }
+            // 백링크 처리
+            await this.removeNoteLinks.removeLinksToFile(currentFile);
 
             // 첨부파일 삭제
             for (const attachment of attachments) {
@@ -85,19 +80,5 @@ export class DeleteCurrentNote {
             console.error("노트 삭제 중 오류 발생:", error);
             new Notice(`오류가 발생했습니다: ${error instanceof Error ? error.message : String(error)}`);
         }
-    }
-
-    private async removeLinksToFile(sourceFile: TFile, targetBasename: string): Promise<void> {
-        let content = await this.app.vault.read(sourceFile);
-        
-        // 일반 위키링크와 임베드 링크 모두 처리
-        const wikiLinkRegex = new RegExp(`!?\\[\\[${targetBasename}(?:\\|[^\\]]*)?\\]\\]`, 'g');
-        
-        content = content.replace(wikiLinkRegex, (match) => {
-            const linkMatch = match.match(/!?\[\[(.*?)(?:\|(.*?))?\]\]/);
-            return linkMatch ? (linkMatch[2] || linkMatch[1]) : match;
-        });
-
-        await this.app.vault.modify(sourceFile, content);
     }
 }

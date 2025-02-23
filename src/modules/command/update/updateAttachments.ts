@@ -21,6 +21,7 @@ export class UpdateAttachments {
             const content = await this.app.vault.read(currentFile);
             const attachmentPattern = /!\[\[(.*?)\]\]/g;
             const matches = Array.from(content.matchAll(attachmentPattern));
+            console.log("찾은 첨부파일 매치:", matches.length);
             
             if (matches.length === 0) {
                 new Notice("첨부 파일을 찾을 수 없습니다.");
@@ -33,24 +34,44 @@ export class UpdateAttachments {
             for (const match of matches) {
                 try {
                     const originalEmbed = match[0];
-                    const originalPath = match[1].split("|")[0].trim();
+                    const originalPath = match[1].trim();
+                    console.log("처리중인 경로:", originalPath);
+                    
+                    const currentParentPath = currentFile.parent?.path || "";
+                    console.log("현재 노트 경로:", currentParentPath);
+
+                    const fullPath = normalizePath(`${currentParentPath}/${originalPath}`);
+                    const attachmentFile = this.app.vault.getAbstractFileByPath(fullPath);
+                    console.log("첨부파일 찾음:", attachmentFile?.path);
                     
                     if (originalPath.includes(`${currentFile.basename}-`)) {
+                        console.log("이미 이름이 변경된 파일:", originalPath);
                         continue;
                     }
 
-                    const attachmentFile = this.app.vault.getAbstractFileByPath(originalPath);
                     if (!(attachmentFile instanceof TFile)) {
+                        console.log("첨부파일이 TFile이 아님");
                         continue;
                     }
-
-                    const newFileName = `${currentFile.basename}-${changedCount + 1}.${attachmentFile.extension}`;
-                    const parentPath = attachmentFile.parent?.path || "";
-                    const newPath = normalizePath(parentPath ? `${parentPath}/${newFileName}` : newFileName);
-
+                    
+                    let counter = 1;
+                    let newFileName;
+                    let newPath;
+                    
+                    // 중복되지 않는 파일 이름을 찾을 때까지 반복
+                    do {
+                        newFileName = `${currentFile.basename}-${counter}.${attachmentFile.extension}`;
+                        newPath = normalizePath(`${currentParentPath}/${newFileName}`);
+                        counter++;
+                    } while (this.app.vault.getAbstractFileByPath(newPath));
+                    
+                    console.log("새 경로:", newPath);
+                    
+                    // 파일 이름 변경
                     await this.app.fileManager.renameFile(attachmentFile, newPath);
                     
-                    const newEmbed = `![[${newPath}]]`;
+                    // 링크 업데이트
+                    const newEmbed = `![[${newFileName}]]`;
                     updatedContent = updatedContent.replace(originalEmbed, newEmbed);
                     changedCount++;
 

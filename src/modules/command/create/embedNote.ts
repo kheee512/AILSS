@@ -43,7 +43,8 @@ export class EmbedNote {
             }
 
             const selectedText = adjustedLines.join('\n');
-            const firstLineContent = firstLine.trim().replace(/^[-*+]\s+/, '');
+            // 선택된 텍스트의 첫 줄을 파일명으로 사용
+            const firstLineContent = selectedText.split('\n')[0].trim().replace(/^[-*+]\s+/, '');
 
             if (!selectedText) {
                 throw new Error("선택된 텍스트가 없습니다.");
@@ -71,15 +72,16 @@ export class EmbedNote {
 
             const now = moment();
             const folderPath = PathSettings.getTimestampedPath(now);
+            
+            // 파일명을 ID 형식으로 생성
+            const fileName = PathSettings.getDefaultFileName();
 
             // 프론트매터 생성 (상속받은 태그만 포함)
             const noteContent = frontmatterManager.generateFrontmatter({
+                title: firstLineContent,
                 tags: nonDefaultTags
-            });
+            }, true);
 
-            // 파일명으로 첫 줄의 텍스트 사용
-            const fileName = `${firstLineContent}${PathSettings.DEFAULT_FILE_EXTENSION}`;
-            
             // 같은 경로에 동일한 파일명이 있는지 확인
             if (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
                 new Notice(`이미 "${firstLineContent}" 노트가 해당 경로에 존재합니다.`);
@@ -91,22 +93,28 @@ export class EmbedNote {
                 await this.app.vault.createFolder(folderPath);
             }
 
-            // 노트 생성 (하위 불렛 포인트들만 포함)
-            const newFile = await this.app.vault.create(
-                `${folderPath}/${fileName}`,
-                `${noteContent}\n${selectedText}`
-            );
+            // 노트 생성
+            const { file, fileName: createdFileName } = await PathSettings.createNote({
+                app: this.app,
+                frontmatterConfig: {
+                    title: firstLineContent,
+                    tags: nonDefaultTags
+                },
+                content: selectedText,
+                isInherited: true
+            });
 
-            // 선택된 텍스트를 임베드 링크로 변경
-            const originalIndent = firstLine.match(/^\s*/)?.[0] ?? '';
-            editor.replaceRange(
-                `${originalIndent}![[${folderPath}/${fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '')}|${firstLineContent}]]\n`,
-                { line: cursor.line, ch: 0 },
-                { line: lines.length + cursor.line, ch: 0 }
-            );
+            // 선택된 텍스트만 링크로 변경
+            const selection = editor.getSelection();
+            const cleanedSelection = selection.replace(/^[-*+]\s+/, '');  // 리스트 마커 제거
+            
+            const fileNameWithoutExtension = createdFileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '');
+            const newLink = `[[${fileNameWithoutExtension}|${cleanedSelection}]]`;
+            
+            editor.replaceSelection(newLink);
 
-            new Notice(`새 노트가 생성되었습니다: ${newFile.path}`);
-            return newFile;
+            new Notice(`새 노트가 생성되었습니다: ${file.path}`);
+            return file;
         } catch (error) {
             new Notice('노트 생성 중 오류가 발생했습니다.');
             console.error('Error creating new note:', error);

@@ -78,11 +78,14 @@ export class DeactivateNotes {
     private async moveNoteToDeactivateFolder(note: TFile, tags: string[]): Promise<void> {
         const mainTag = tags[0].replace(/^#/, '').replace(/\//g, '-');
         
-        // 원본 경로에서 시간 구조 추출
+        // 원본 경로에서 시간 구조 추출 수정
         const pathParts = note.path.split('/');
-        const timeStructure = pathParts.slice(0, 4).join('/'); // YY/MM/DD/HH 부분 유지
+        const timeStructure = pathParts
+            .filter(part => /^\d{4}$|\d{2}$/.test(part)) // YYYY, MM, DD 형식만 필터링
+            .slice(0, 3)  // YYYY/MM/DD 형식만 유지
+            .join('/');
         
-        // 비활성화 경로 구성 (원본 시간 구조 유지)
+        // 비활성화 경로 구성
         const deactivatePath = `${DeactivateNotes.DEACTIVATED_ROOT}/${mainTag}/${timeStructure}`;
         
         await this.ensureDeactivatedFolder();
@@ -131,9 +134,18 @@ export class DeactivateNotes {
             const cache = this.app.metadataCache.getFileCache(file);
             const frontmatterTags = cache?.frontmatter?.tags;
             
-            if (Array.isArray(frontmatterTags) && 
-                frontmatterTags.some(tag => normalizedTags.includes(tag))) {
-                notesToDeactivate.add(file);
+            if (Array.isArray(frontmatterTags)) {
+                // 각 노트의 태그가 입력된 태그와 정확히 일치하거나
+                // 입력된 태그 + '/'로 시작하는 경우를 포함하면 노트를 추가
+                if (
+                    frontmatterTags.some((fileTag: string) =>
+                        normalizedTags.some(normalized =>
+                            fileTag === normalized || fileTag.startsWith(`${normalized}/`)
+                        )
+                    )
+                ) {
+                    notesToDeactivate.add(file);
+                }
             }
         }
         

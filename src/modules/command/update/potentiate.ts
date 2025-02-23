@@ -30,8 +30,8 @@ export class Potentiate {
             return;
         }
 
-        const currentPotentiation = Number(frontmatter.Potentiation) || 0;
-        const lastActivated = frontmatter.Activated ? new Date(frontmatter.Activated) : null;
+        const currentPotentiation = Number(frontmatter.potentiation) || 0;
+        const lastActivated = frontmatter.updated ? new Date(frontmatter.updated) : null;
 
         // 최대 강화 지수 체크
         if (FrontmatterManager.isPotentiationMaxed(currentPotentiation)) {
@@ -63,12 +63,12 @@ export class Potentiate {
 
         // 강화 수행
         const newPotentiation = currentPotentiation + FrontmatterManager.getPotentiationIncrement();
-        const now = moment();
-        const formattedDate = now.format('YYYY-MM-DD HH:mm');
+        const now = moment().utcOffset('+09:00');  // 한국 시간대 설정
+        const formattedDate = now.format('YYYY-MM-DDTHH:mm:ss');  // ISO 8601 형식으로 변경
 
         const updatedContent = this.frontmatterManager.updateFrontmatter(fileContent, {
-            Potentiation: newPotentiation,
-            Activated: formattedDate
+            potentiation: newPotentiation,
+            updated: formattedDate
         });
 
         await this.app.vault.modify(activeFile, updatedContent);

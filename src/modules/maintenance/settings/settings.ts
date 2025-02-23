@@ -8,9 +8,11 @@ export interface AILSSSettings {
     claudeAPIKey: string;
     perplexityAPIKey: string;
     selectedAIModel: 'openai' | 'claude' | 'perplexity';
+    selectedVisionModel: 'claude' | 'openai';
     openAIModel: string;
     claudeModel: string;
     perplexityModel: string;
+    dalleModel: 'dall-e-2' | 'dall-e-3';
 }
 
 export const DEFAULT_SETTINGS: AILSSSettings = {
@@ -18,9 +20,11 @@ export const DEFAULT_SETTINGS: AILSSSettings = {
     claudeAPIKey: '',
     perplexityAPIKey: '',
     selectedAIModel: 'claude',
+    selectedVisionModel: 'claude',
     openAIModel: 'gpt-4o',
     claudeModel: 'claude-3-5-sonnet-20241022',
     perplexityModel: 'sonar-pro',
+    dalleModel: 'dall-e-3',
 };
 
 export class AILSSSettingTab extends PluginSettingTab {
@@ -45,6 +49,11 @@ export class AILSSSettingTab extends PluginSettingTab {
         containerEl.createEl('h2', { text: 'AI 모델 설정' });
         const aiSettingsContainer = containerEl.createDiv('ai-settings-section');
         this.addAISettings(aiSettingsContainer);
+
+        // API 설정 섹션
+        containerEl.createEl('h2', { text: 'API 설정' });
+        const apiSettingsContainer = containerEl.createDiv('api-settings-section');
+        this.addAPISettings(apiSettingsContainer);
     }
 
     private async addStatistics(containerEl: HTMLElement) {
@@ -84,22 +93,45 @@ export class AILSSSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
-        containerEl.createEl('hr');
+        new Setting(containerEl)
+            .setName('Vision 모델 선택')
+            .setDesc('이미지 분석에 사용할 AI 모델을 선택하세요')
+            .addDropdown(dropdown => dropdown
+                .addOption('claude', 'Claude Vision')
+                .addOption('openai', 'GPT-4 Vision')
+                .setValue(this.plugin.settings.selectedVisionModel)
+                .onChange(async (value: 'claude' | 'openai') => {
+                    this.plugin.settings.selectedVisionModel = value;
+                    await this.plugin.saveSettings();
+                }));
 
+        new Setting(containerEl)
+            .setName('DALL-E 모델')
+            .setDesc('이미지 생성에 사용할 DALL-E 모델을 선택하세요')
+            .addDropdown(dropdown => dropdown
+                .addOption('dall-e-2', 'DALL-E 2')
+                .addOption('dall-e-3', 'DALL-E 3')
+                .setValue(this.plugin.settings.dalleModel)
+                .onChange(async (value: 'dall-e-2' | 'dall-e-3') => {
+                    this.plugin.settings.dalleModel = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        containerEl.createEl('hr');
+    }
+
+    private addAPISettings(containerEl: HTMLElement) {
         this.addMaskedApiKeySetting(containerEl, 'OpenAI API Key', 'openAIAPIKey');
-        
         new Setting(containerEl)
             .setName('OpenAI 모델')
             .setDesc('사용할 OpenAI 모델을 선택하세요')
             .addDropdown(dropdown => dropdown
                 .addOption('gpt-4o', 'GPT-4o')
-                .addOption('gpt-4o-audio-preview', 'GPT-4o Audio')
-                .addOption('gpt-4o-realtime-preview', 'GPT-4o Realtime')
                 .addOption('gpt-4o-mini', 'GPT-4o mini')
-                .addOption('gpt-4o-mini-audio-preview', 'GPT-4o mini Audio')
-                .addOption('gpt-4o-mini-realtime-preview', 'GPT-4o mini Realtime')
-                .addOption('o1', 'o1')
+                .addOption('o1-preview', 'o1-preview')
                 .addOption('o1-mini', 'o1-mini')
+                .addOption('o3-mini', 'o3-mini')
+                .addOption('o1', 'o1')
                 .setValue(this.plugin.settings.openAIModel)
                 .onChange(async (value) => {
                     this.plugin.settings.openAIModel = value;
@@ -107,7 +139,6 @@ export class AILSSSettingTab extends PluginSettingTab {
                 }));
 
         this.addMaskedApiKeySetting(containerEl, 'Claude API Key', 'claudeAPIKey');
-
         new Setting(containerEl)
             .setName('Claude 모델')
             .setDesc('사용할 Claude 모델을 선택하세요')
@@ -121,11 +152,12 @@ export class AILSSSettingTab extends PluginSettingTab {
                 }));
 
         this.addMaskedApiKeySetting(containerEl, 'Perplexity API Key', 'perplexityAPIKey');
-
         new Setting(containerEl)
             .setName('Perplexity 모델')
             .setDesc('사용할 Perplexity 모델을 선택하세요')
             .addDropdown(dropdown => dropdown
+                .addOption('sonar-reasoning-pro', 'Sonar Reasoning Pro')
+                .addOption('sonar-reasoning', 'Sonar Reasoning')
                 .addOption('sonar-pro', 'Sonar Pro')
                 .addOption('sonar', 'Sonar')
                 .setValue(this.plugin.settings.perplexityModel)

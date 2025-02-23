@@ -51,37 +51,37 @@ export class LinkNote {
 
             const now = moment();
             const folderPath = PathSettings.getTimestampedPath(now);
+            
+            // 파일명을 ID 형식으로 생성
+            const fileName = PathSettings.getDefaultFileName();
 
             // 프론트매터 생성 (상속받은 태그만 포함)
             const noteContent = frontmatterManager.generateFrontmatter({
+                title: selectedText,
                 tags: nonDefaultTags
-            }) + `\n- ${selectedText}`;
-
-            // 파일명으로 선택된 텍스트 사용
-            const fileName = `${selectedText}${PathSettings.DEFAULT_FILE_EXTENSION}`;
-            
-            // 같은 경로에 동일한 파일명이 있는지 확인
-            if (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
-                new Notice(`이미 "${selectedText}" 노트가 해당 경로에 존재합니다.`);
-                return;
-            }
+            }, true) + `\n- ${selectedText}`;
 
             // 폴더 생성
             if (!(await this.app.vault.adapter.exists(folderPath))) {
                 await this.app.vault.createFolder(folderPath);
             }
 
-            // 노트 생성
-            const newFile = await this.app.vault.create(
-                `${folderPath}/${fileName}`,
-                noteContent
-            );
+            const { file, fileName: createdFileName } = await PathSettings.createNote({
+                app: this.app,
+                frontmatterConfig: {
+                    title: selectedText,
+                    tags: nonDefaultTags
+                },
+                content: `- ${selectedText}`,
+                isInherited: true
+            });
 
             // 선택된 텍스트를 링크로 변경
-            editor.replaceSelection(`[[${folderPath}/${fileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '')}|${selectedText}]]`);
+            const fileNameWithoutExtension = createdFileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '');
+            editor.replaceSelection(`[[${fileNameWithoutExtension}|${selectedText}]]`);
 
-            new Notice(`새 노트가 생성되었습니다: ${newFile.path}`);
-            return newFile;
+            new Notice(`새 노트가 생성되었습니다: ${file.path}`);
+            return file;
         } catch (error) {
             new Notice('노트 생성 중 오류가 발생했습니다.');
             console.error('Error creating new note:', error);

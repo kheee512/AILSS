@@ -24,22 +24,14 @@ export class RenewNote {
         }
 
         try {
-            const now = moment();
-            const currentHour = now.format('YYYY-MM-DD HH');
-            
-            // 노트의 마지막 갱신 시간 확인
             const content = await this.app.vault.read(activeFile);
             const frontmatter = this.frontmatterManager.parseFrontmatter(content);
-            const lastActivated = frontmatter?.Activated;
             
-            if (lastActivated) {
-                const lastActivatedHour = moment(lastActivated, 'YYYY-MM-DD HH:mm').format('YYYY-MM-DD HH');
-                
-                // 같은 시간대에 이미 갱신된 노트는 다시 갱신하지 않음
-                if (lastActivatedHour === currentHour) {
-                    new Notice('이미 현재 시간에 갱신된 노트입니다.');
-                    return;
-                }
+            // potentiation이 최대값이 아니면 갱신 불가
+            const currentPotentiation = frontmatter?.potentiation ?? 0;
+            if (!FrontmatterManager.isPotentiationMaxed(currentPotentiation)) {
+                new Notice('potentiation이 최대값에 도달하지 않았습니다.');
+                return;
             }
 
             await this.renewNote(activeFile);
@@ -55,8 +47,22 @@ export class RenewNote {
         const newPath = PathSettings.getTimestampedPath(now);
         const attachments = await this.getLinkedAttachments(file);
         
-        // 새 경로에서 사용할 노트 이름 생성
-        const { newNoteName, newNotePath } = await this.generateNewNotePath(file, newPath);
+        // 새로운 id 생성 (YYYYMMDDHHmmss 형식)
+        const newId = now.format('YYYYMMDDHHmmss');
+        
+        // 프론트매터 업데이트 - 기존 내용을 유지하면서 필요한 필드만 업데이트
+        const content = await this.app.vault.read(file);
+        const currentFrontmatter = this.frontmatterManager.parseFrontmatter(content);
+        const updatedContent = this.frontmatterManager.updateFrontmatter(content, {
+            ...currentFrontmatter,
+            id: newId,
+            potentiation: FrontmatterManager.INITIAL_POTENTIATION,
+            date: now.clone().add(9, 'hours').toISOString().split('.')[0],
+            updated: now.clone().add(9, 'hours').toISOString().split('.')[0]
+        });
+
+        // 새 경로에서 사용할 노트 이름 생성 (id 기반)
+        const { newNotePath } = await this.generateNewNotePathWithId(file, newPath, newId);
         
         // 새 디렉토리가 없으면 생성
         const newDir = newNotePath.substring(0, newNotePath.lastIndexOf('/'));
@@ -65,15 +71,8 @@ export class RenewNote {
         }
         
         // 첨부파일들의 새 경로 생성
-        const attachmentMoves = await this.generateAttachmentPaths(attachments, newNoteName, newPath);
+        const attachmentMoves = await this.generateAttachmentPaths(attachments, newId, newPath);
         
-        // 프론트매터 업데이트
-        const content = await this.app.vault.read(file);
-        const updatedContent = this.frontmatterManager.updateFrontmatter(content, {
-            Activated: now.format('YYYY-MM-DD HH:mm'),
-            Potentiation: FrontmatterManager.INITIAL_POTENTIATION
-        });
-
         // 파일 이동 실행
         await this.app.vault.rename(file, newNotePath);
         await this.app.vault.modify(file, updatedContent);
@@ -104,17 +103,9 @@ export class RenewNote {
         return attachments;
     }
 
-    private async generateNewNotePath(file: TFile, newPath: string): Promise<{ newNoteName: string, newNotePath: string }> {
-        let index = 0;
-        let newNoteName = file.basename;
-        let newNotePath = `${newPath}/${newNoteName}.${file.extension}`;
-
-        while (this.app.vault.getAbstractFileByPath(newNotePath)) {
-            index++;
-            newNoteName = `${file.basename}-${index}`;
-            newNotePath = `${newPath}/${newNoteName}.${file.extension}`;
-        }
-
+    private async generateNewNotePathWithId(file: TFile, newPath: string, newId: string): Promise<{ newNoteName: string, newNotePath: string }> {
+        const newNoteName = newId;
+        const newNotePath = `${newPath}/${newNoteName}.${file.extension}`;
         return { newNoteName, newNotePath };
     }
 

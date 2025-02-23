@@ -2,13 +2,18 @@ import { moment } from 'obsidian';
 import type AILSSPlugin from 'main';
 
 export interface DefaultFrontmatterConfig {
-    Activated: string;
-    Potentiation: number;
+    title: string;
+    id: string;
+    date: string;
+    aliases: string[];
     tags: string[];
+    potentiation: number;
+    updated: string;
 }
 
 export class FrontmatterManager {
     public static readonly DEFAULT_TAGS = ['Initial'];
+    public static readonly DEFAULT_UNTITLED = 'untitled';
     public static readonly INITIAL_POTENTIATION = 0;
     public static readonly MAX_POTENTIATION = 100;
     public static readonly POTENTIATION_INCREMENT = 1;
@@ -16,24 +21,68 @@ export class FrontmatterManager {
 
     constructor() {}
 
-    private getDefaultFrontmatter(now: moment.Moment): DefaultFrontmatterConfig {
+    private getDefaultFrontmatter(now: moment.Moment, isLinkNote: boolean = false): DefaultFrontmatterConfig {
+        const timestamp = now.format('YYYYMMDDHHmmss');
+        const koreanTime = now.add(9, 'hours');  // UTC+9 적용
+        const defaultTitle = FrontmatterManager.DEFAULT_UNTITLED;
+        
         return {
-            Activated: now.format('YYYY-MM-DD HH:mm'),
-            Potentiation: FrontmatterManager.INITIAL_POTENTIATION,
-            tags: [...FrontmatterManager.DEFAULT_TAGS]
+            title: defaultTitle,
+            id: timestamp,
+            date: koreanTime.toISOString().split('.')[0],
+            aliases: isLinkNote ? [] : [defaultTitle],
+            tags: [...FrontmatterManager.DEFAULT_TAGS],
+            potentiation: FrontmatterManager.INITIAL_POTENTIATION,
+            updated: koreanTime.toISOString().split('.')[0]
         };
     }
 
     // 프론트매터 생성 메서드
     generateFrontmatter(additionalFields: Record<string, any> = {}, isLinkNote: boolean = false): string {
         const now = moment();
-        const defaultFields = isLinkNote 
-            ? this.getDefaultFrontmatter(now)
-            : this.getDefaultFrontmatter(now);
+        const defaultFields = this.getDefaultFrontmatter(now, isLinkNote);
+
+        // created와 activated 필드를 새로운 필드명으로 매핑 (한국 시간대 적용)
+        if (additionalFields.created) {
+            additionalFields.date = moment(additionalFields.created)
+                .add(9, 'hours')
+                .toISOString()
+                .split('.')[0];
+            delete additionalFields.created;
+        }
+        if (additionalFields.activated) {
+            additionalFields.updated = moment(additionalFields.activated)
+                .add(9, 'hours')
+                .toISOString()
+                .split('.')[0];
+            delete additionalFields.activated;
+        }
+
+        // 링크 노트인 경우 aliases에 title 값 추가
+        if (isLinkNote && additionalFields.title) {
+            additionalFields.aliases = [additionalFields.title];
+        }
 
         const mergedFields = { ...defaultFields, ...additionalFields };
-
+        
+        // 프론트매터 순서 정의
+        const orderedKeys = ['title', 'id', 'date', 'aliases', 'tags', 'potentiation', 'updated'];
+        
         let yaml = '---\n';
+        // 정의된 순서대로 먼저 처리
+        orderedKeys.forEach((key: keyof DefaultFrontmatterConfig) => {
+            if (key in mergedFields) {
+                const value = mergedFields[key];
+                if (Array.isArray(value)) {
+                    yaml += `${key}:\n${value.map(v => `  - ${v}`).join('\n')}\n`;
+                } else {
+                    yaml += `${key}: ${value}\n`;
+                }
+                delete mergedFields[key];
+            }
+        });
+        
+        // 나머지 필드들 처리
         Object.entries(mergedFields).forEach(([key, value]) => {
             if (Array.isArray(value)) {
                 yaml += `${key}:\n${value.map(v => `  - ${v}`).join('\n')}\n`;
