@@ -145,6 +145,7 @@ export class AILSSSettingTab extends PluginSettingTab {
             .addDropdown(dropdown => dropdown
                 .addOption('claude-3-5-sonnet-20241022', 'Claude 3.5 Sonnet')
                 .addOption('claude-3-5-haiku-20241022', 'Claude 3.5 Haiku')
+                .addOption('claude-3-7-sonnet-20250219', 'Claude 3.7 Sonnet')
                 .setValue(this.plugin.settings.claudeModel)
                 .onChange(async (value) => {
                     this.plugin.settings.claudeModel = value;
