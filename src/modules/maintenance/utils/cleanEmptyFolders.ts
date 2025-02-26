@@ -45,15 +45,26 @@ export class CleanEmptyFolders {
             return false;
         }
 
-        // 폴더의 실제 내용물을 확인
-        const files = await this.app.vault.adapter.list(folder.path);
-        const isEmpty = files.files.length === 0 && files.folders.length === 0;
-
-        // 빈 폴더이고 루트 폴더가 아닌 경우에만 목록에 추가
-        if (isEmpty && folder.path !== '/') {
-            emptyFolders.push(folder);
+        // 하위 폴더 처리
+        let allSubfoldersEmpty = true;
+        for (const child of folder.children) {
+            if (child instanceof TFolder) {
+                const isEmpty = await this.processFolder(child, depth + 1, emptyFolders);
+                if (!isEmpty) {
+                    allSubfoldersEmpty = false;
+                }
+            } else {
+                // 파일이 있으면 이 폴더는 비어있지 않음
+                allSubfoldersEmpty = false;
+            }
         }
 
-        return isEmpty;
+        // 모든 하위 폴더가 비어있고 파일이 없는 경우 이 폴더는 비어있음
+        if (allSubfoldersEmpty && folder.children.length === 0 && folder.path !== '/') {
+            emptyFolders.push(folder);
+            return true;
+        }
+
+        return false;
     }
 }
