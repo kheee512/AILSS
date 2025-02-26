@@ -118,6 +118,11 @@ export class IntegrityCheck {
     }
 
     private async checkFolder(folder: TFolder, report: IntegrityReport, options: IntegrityCheckOptions): Promise<boolean> {
+        // 비활성화 폴더는 검사에서 제외
+        if (folder.path === PathSettings.DEACTIVATED_ROOT || folder.path.startsWith(`${PathSettings.DEACTIVATED_ROOT}/`)) {
+            return true; // 비활성화 폴더는 유효한 콘텐츠가 있는 것으로 간주
+        }
+
         let hasValidContent = false;
         report.statistics.folderCount++;
 
