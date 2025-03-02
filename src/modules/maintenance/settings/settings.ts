@@ -127,6 +127,7 @@ export class AILSSSettingTab extends PluginSettingTab {
             .setDesc('사용할 OpenAI 모델을 선택하세요')
             .addDropdown(dropdown => dropdown
                 .addOption('gpt-4o', 'GPT-4o')
+                .addOption('gpt-4.5-preview', 'GPT-4.5 Preview')
                 .addOption('gpt-4o-mini', 'GPT-4o mini')
                 .addOption('o1-preview', 'o1-preview')
                 .addOption('o1-mini', 'o1-mini')
