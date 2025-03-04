@@ -47,9 +47,24 @@ export class ConfirmationModal extends Modal {
             }
         });
 
-        messageContainer.createSpan({
-            text: this.options.message
-        });
+        const messageParts = this.options.message.split('\n\n');
+        
+        if (messageParts.length > 1) {
+            messageContainer.createDiv({
+                text: messageParts[0],
+                attr: { 
+                    style: "font-weight: 600; margin-bottom: 1rem; padding: 0.5rem; background-color: var(--background-modifier-hover);" 
+                }
+            });
+
+            messageContainer.createDiv({
+                text: messageParts[1]
+            });
+        } else {
+            messageContainer.createSpan({
+                text: this.options.message
+            });
+        }
 
         const buttonContainer = container.createDiv({
             cls: "modal-button-container",
