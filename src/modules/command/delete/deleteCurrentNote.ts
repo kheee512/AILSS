@@ -41,9 +41,12 @@ export class DeleteCurrentNote {
             }
 
             // 삭제 확인 메시지 수정
-            const confirmMessage = attachments.length > 0
-                ? `노트명: ${currentFile.name}\n\n${attachments.length}개의 첨부파일을 포함하여 삭제하시겠습니까?`
-                : `노트명: ${currentFile.name}\n\n관련된 모든 링크를 해제하고 삭제하시겠습니까?`;
+            const noteName = `${currentFile.name}`;
+            const deleteMessage = attachments.length > 0
+                ? `${attachments.length}개의 첨부파일을 포함하여 삭제하시겠습니까?`
+                : `관련된 모든 링크를 해제하고 삭제하시겠습니까?`;
+            
+            const confirmMessage = `${noteName}\n\n${deleteMessage}`;
 
             const shouldDelete = await showConfirmationDialog(this.app, {
                 title: "노트 삭제",
