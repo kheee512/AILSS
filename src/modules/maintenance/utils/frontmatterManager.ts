@@ -12,7 +12,7 @@ export interface DefaultFrontmatterConfig {
 }
 
 export class FrontmatterManager {
-    public static readonly DEFAULT_TAGS = ['Initial'];
+    public static readonly DEFAULT_TAGS = ['Inbox'];
     public static readonly DEFAULT_UNTITLED = 'untitled';
     public static readonly INITIAL_POTENTIATION = 0;
     public static readonly MAX_POTENTIATION = 100;
