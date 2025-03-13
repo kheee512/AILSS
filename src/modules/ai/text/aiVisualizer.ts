@@ -137,26 +137,11 @@ export class AIVisualizer {
 
 ${selectedText}
 
-응답 형식:
-1. 분석 내용:
-   - 핵심 개념과 관계
-   - 주요 구조와 패턴
-   - 중요 데이터 포인트
-
-2. 선택한 다이어그램 유형:
-   - 선택한 Mermaid 다이어그램 종류
-   - 선택 이유
-   - 대안으로 고려한 다이어그램 유형들
-
-3. Mermaid 다이어그램:
+다른 내용 없이 응답은 무조건 다음 형식 준수:
 \`\`\`mermaid
 [다이어그램 코드]
 \`\`\`
-
-4. 다이어그램 설명:
-   - 주요 구성 요소 설명
-   - 관계 및 흐름 설명
-   - 중요 포인트 강조`;
+`;
 
             //console.log('AI 요청 시작', {
             //    model: this.plugin.settings.selectedAIModel,
