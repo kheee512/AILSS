@@ -24,6 +24,7 @@ import { RecoverNote } from './src/modules/command/create/recoverNote';
 import { AIImageCreator } from './src/modules/ai/image/aiImageCreator';
 import { AIProcess } from './src/modules/ai/text/aiProcess';
 import { AIReformat } from './src/modules/ai/text/aiReformat';
+import { UnlinkNotes } from './src/modules/command/update/unlinkNotes';
 
 
 
@@ -57,6 +58,7 @@ export default class AILSSPlugin extends Plugin {
 	private aiImageCreator: AIImageCreator;
 	private aiProcess: AIProcess;
 	private aiReformat: AIReformat;
+	private unlinkNotesManager: UnlinkNotes;
 
 
 
@@ -112,6 +114,9 @@ export default class AILSSPlugin extends Plugin {
 
 		// AI Reformat 초기화
 		this.aiReformat = new AIReformat(this.app, this);
+
+		// UnlinkNotes 초기화
+		this.unlinkNotesManager = new UnlinkNotes(this.app, this);
 
 		// 리본 메뉴 아이콘들 업데이트
 		this.addRibbonIcon('plus', '노트 생성', () => {
@@ -200,6 +205,10 @@ export default class AILSSPlugin extends Plugin {
 
 		this.addRibbonIcon('list', '텍스트 재구성', () => {
 			this.aiReformat.main();
+		});
+
+		this.addRibbonIcon('unlink', '노트 링크 해제', () => {
+			this.unlinkNotesManager.unlinkSelectedNotes();
 		});
 
 		// 명령어 추가
@@ -355,6 +364,13 @@ export default class AILSSPlugin extends Plugin {
 			name: '텍스트 재구성',
 			icon: 'list',
 			editorCallback: () => this.aiReformat.main()
+		});
+
+		this.addCommand({
+			id: 'unlink-notes',
+			name: '노트 링크 해제',
+			icon: 'unlink',
+			editorCallback: () => this.unlinkNotesManager.unlinkSelectedNotes()
 		});
 	}
 
