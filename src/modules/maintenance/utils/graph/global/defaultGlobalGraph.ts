@@ -1,7 +1,7 @@
 export const DEFAULT_GLOBAL_GRAPH = {
   "collapse-filter": false,
   "search": "",
-  "showTags": false,
+  "showTags": true,
   "showAttachments": false,
   "hideUnresolved": true,
   "showOrphans": true,
@@ -11,7 +11,7 @@ export const DEFAULT_GLOBAL_GRAPH = {
       "query": "[\"potentiation\":<1]",
       "color": {
         "a": 1,
-        "rgb": 14079702
+        "rgb": 10066329
       }
     },
     {
@@ -88,13 +88,13 @@ export const DEFAULT_GLOBAL_GRAPH = {
   "collapse-display": false,
   "showArrow": true,
   "textFadeMultiplier": 0,
-  "nodeSizeMultiplier": 1,
-  "lineSizeMultiplier": 2,
+  "nodeSizeMultiplier": 1.4,
+  "lineSizeMultiplier": 2.1,
   "collapse-forces": false,
   "centerStrength": 0.25,
   "repelStrength": 8,
-  "linkStrength": 1,
-  "linkDistance": 30,
-  "scale": 0.5,
+  "linkStrength": 0.8,
+  "linkDistance": 250,
+  "scale": 0.2,
   "close": true
 } as const;

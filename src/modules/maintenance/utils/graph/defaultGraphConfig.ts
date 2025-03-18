@@ -9,16 +9,16 @@ export const DEFAULT_GRAPH_CONFIG = {
     "collapse-display": true,
     "showArrow": true,
     "textFadeMultiplier": 0.5,
-    "nodeSizeMultiplier": 1,
-    "lineSizeMultiplier": 1.8,
+    "nodeSizeMultiplier": 1.5,
+    "lineSizeMultiplier": 4,
     "collapse-forces": true,
     "centerStrength": 0.8,
-    "repelStrength": 14,
+    "repelStrength": 13,
     "linkStrength": 1,
     "linkDistance": 30,
-    "scale": 1.3,
+    "scale": 1.8,
 
-    "localJumps": 3,
+    "localJumps": 1,
     "localBacklinks": true,
     "localForelinks": true,
     "localInterlinks": true,
@@ -26,7 +26,7 @@ export const DEFAULT_GRAPH_CONFIG = {
     "colorGroups": [
         {
             "query": "[\"potentiation\":<1]",
-            "color": { "a": 1, "rgb": 14079702 }
+            "color": { "a": 1, "rgb": 10066329 }
         },
         {
             "query": "[\"potentiation\":<11]",
