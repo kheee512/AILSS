@@ -183,7 +183,7 @@ export class OpenAITTS {
      * 오디오 링크 생성
      */
     private createAudioLink(file: TFile): string {
-        return `![[${file.path}]]`;
+        return `![[${file.name}]]`;
     }
     
     /**
