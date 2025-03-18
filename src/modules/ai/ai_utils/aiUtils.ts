@@ -93,9 +93,7 @@ async function requestToOpenAI(apiKey: string, prompt: AIPrompt, model: string):
         model: model,
         messages: [
             { role: 'user', content: prompt.userPrompt }
-        ],
-        temperature: prompt.temperature ?? 0.7,
-        max_tokens: prompt.max_tokens
+        ]
     };
 
     const params: RequestUrlParam = {
@@ -153,7 +151,6 @@ async function requestToClaude(apiKey: string, prompt: AIPrompt, model: string):
         const response = await anthropic.messages.create({
             model: model,
             max_tokens: prompt.max_tokens,
-            temperature: prompt.temperature ?? 0.7,
             messages: [
                 { role: "user", content: prompt.userPrompt }
             ],
@@ -211,9 +208,7 @@ async function requestToPerplexity(apiKey: string, prompt: AIPrompt, model: stri
         model: model,
         messages: [
             { role: 'user', content: prompt.userPrompt }
-        ],
-        temperature: prompt.temperature ?? 0.7,
-        max_tokens: prompt.max_tokens
+        ]
     };
 
     const params: RequestUrlParam = {
