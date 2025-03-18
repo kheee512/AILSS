@@ -74,9 +74,17 @@ export class FrontmatterManager {
             if (key in mergedFields) {
                 const value = mergedFields[key];
                 if (Array.isArray(value)) {
-                    yaml += `${key}:\n${value.map(v => `  - ${v}`).join('\n')}\n`;
+                    if (key === 'aliases') {
+                        yaml += `${key}:\n${value.map(v => `  - '${v}'`).join('\n')}\n`;
+                    } else {
+                        yaml += `${key}:\n${value.map(v => `  - ${v}`).join('\n')}\n`;
+                    }
                 } else {
-                    yaml += `${key}: ${value}\n`;
+                    if (key === 'title') {
+                        yaml += `${key}: '${value}'\n`;
+                    } else {
+                        yaml += `${key}: ${value}\n`;
+                    }
                 }
                 delete mergedFields[key];
             }
@@ -85,9 +93,17 @@ export class FrontmatterManager {
         // 나머지 필드들 처리
         Object.entries(mergedFields).forEach(([key, value]) => {
             if (Array.isArray(value)) {
-                yaml += `${key}:\n${value.map(v => `  - ${v}`).join('\n')}\n`;
+                if (key === 'aliases') {
+                    yaml += `${key}:\n${value.map(v => `  - '${v}'`).join('\n')}\n`;
+                } else {
+                    yaml += `${key}:\n${value.map(v => `  - ${v}`).join('\n')}\n`;
+                }
             } else {
-                yaml += `${key}: ${value}\n`;
+                if (key === 'title') {
+                    yaml += `${key}: '${value}'\n`;
+                } else {
+                    yaml += `${key}: ${value}\n`;
+                }
             }
         });
         yaml += '---';
