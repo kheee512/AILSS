@@ -13,6 +13,8 @@ export interface AILSSSettings {
     claudeModel: string;
     perplexityModel: string;
     dalleModel: 'dall-e-2' | 'dall-e-3';
+    ttsModel: 'tts-1' | 'tts-1-hd';
+    ttsVoice: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
 }
 
 export const DEFAULT_SETTINGS: AILSSSettings = {
@@ -25,6 +27,8 @@ export const DEFAULT_SETTINGS: AILSSSettings = {
     claudeModel: 'claude-3-5-sonnet-20241022',
     perplexityModel: 'sonar-pro',
     dalleModel: 'dall-e-3',
+    ttsModel: 'tts-1-hd',
+    ttsVoice: 'nova',
 };
 
 export class AILSSSettingTab extends PluginSettingTab {
@@ -114,6 +118,34 @@ export class AILSSSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.dalleModel)
                 .onChange(async (value: 'dall-e-2' | 'dall-e-3') => {
                     this.plugin.settings.dalleModel = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('TTS 모델')
+            .setDesc('음성 합성에 사용할 TTS 모델을 선택하세요')
+            .addDropdown(dropdown => dropdown
+                .addOption('tts-1', 'TTS-1 (표준)')
+                .addOption('tts-1-hd', 'TTS-1-HD (고품질)')
+                .setValue(this.plugin.settings.ttsModel)
+                .onChange(async (value: 'tts-1' | 'tts-1-hd') => {
+                    this.plugin.settings.ttsModel = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('TTS 음성')
+            .setDesc('기본 음성 타입을 선택하세요')
+            .addDropdown(dropdown => dropdown
+                .addOption('alloy', 'Alloy')
+                .addOption('echo', 'Echo')
+                .addOption('fable', 'Fable')
+                .addOption('onyx', 'Onyx')
+                .addOption('nova', 'Nova')
+                .addOption('shimmer', 'Shimmer')
+                .setValue(this.plugin.settings.ttsVoice)
+                .onChange(async (value: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer') => {
+                    this.plugin.settings.ttsVoice = value;
                     await this.plugin.saveSettings();
                 }));
 

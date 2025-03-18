@@ -1,4 +1,4 @@
-import { Plugin} from 'obsidian';
+import { Plugin, Editor, MarkdownView } from 'obsidian';
 import { NewNote } from './src/modules/command/create/newNote';
 import { LinkNote } from './src/modules/command/create/linkNote';
 import { UpdateTags } from './src/modules/command/update/updateTags';
@@ -25,6 +25,7 @@ import { AIImageCreator } from './src/modules/ai/image/aiImageCreator';
 import { AIProcess } from './src/modules/ai/text/aiProcess';
 import { AIReformat } from './src/modules/ai/text/aiReformat';
 import { UnlinkNotes } from './src/modules/command/update/unlinkNotes';
+import { OpenAITTS } from './src/modules/ai/audio/openai_tts';
 
 
 
@@ -211,6 +212,15 @@ export default class AILSSPlugin extends Plugin {
 			this.unlinkNotesManager.unlinkSelectedNotes();
 		});
 
+		// TTS 리본 메뉴 추가
+		this.addRibbonIcon('mic', 'TTS 변환', () => {
+			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+			if (view && view.editor) {
+				const tts = new OpenAITTS(this);
+				tts.convertTextToSpeech(view.editor);
+			}
+		});
+
 		// 명령어 추가
 		this.addCommand({
 			id: 'create-neuron',
@@ -371,6 +381,17 @@ export default class AILSSPlugin extends Plugin {
 			name: '노트 링크 해제',
 			icon: 'unlink',
 			editorCallback: () => this.unlinkNotesManager.unlinkSelectedNotes()
+		});
+
+		// TTS 명령어 등록 (하나로 통일)
+		this.addCommand({
+			id: 'convert-text-to-speech',
+			name: 'TTS 변환',
+			icon: 'mic',
+			editorCallback: (editor: Editor) => {
+				const tts = new OpenAITTS(this);
+				tts.convertTextToSpeech(editor);
+			}
 		});
 	}
 

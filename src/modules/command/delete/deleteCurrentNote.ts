@@ -2,7 +2,7 @@ import { App, Notice, TFile } from 'obsidian';
 import type AILSSPlugin from '../../../../main';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
 import { CleanEmptyFolders } from '../../maintenance/utils/cleanEmptyFolders';
-import { RemoveNoteLinks } from '../../maintenance/utils/removeNoteLinks';
+import { RemoveNoteLinks } from './removeNoteLinks';
 
 export class DeleteCurrentNote {
     private app: App;
