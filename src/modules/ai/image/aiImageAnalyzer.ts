@@ -88,7 +88,9 @@ export class AIImageAnalyzer {
 6. 복잡한 수식이나 여러 줄의 수식은 $$ 기호로 감싸서 출력
 7. 분석 결과는 객관적이고 사실에 기반`;
 
-        const userPrompt = `다음 지시사항에 따라 이미지를 분석해주세요:
+        const userPrompt = `${systemPrompt}
+
+다음 지시사항에 따라 이미지를 분석해주세요:
 ${instruction}
 
 분석 결과만 출력하고 다른 설명은 추가하지 마세요.`;
@@ -102,7 +104,6 @@ ${instruction}
             model: "claude-3-5-sonnet-20241022",
             max_tokens: 4000,
             temperature: 0.3,
-            system: systemPrompt,
             messages: [{
                 role: "user",
                 content: [
@@ -133,19 +134,24 @@ ${instruction}
             'Content-Type': 'application/json'
         };
 
+        const systemPrompt = `당신은 이미지 분석 전문가입니다. 사용자의 지시사항에 따라 이미지를 정확하게 분석하고 관련 정보를 추출합니다.`;
+        
+        const userPrompt = `${systemPrompt}
+
+다음 지시사항에 따라 이미지를 분석해주세요:
+${instruction}
+
+분석 결과만 출력하고 다른 설명은 추가하지 마세요.`;
+
         const data = {
             model: "gpt-4o",
             messages: [
-                {
-                    role: "system",
-                    content: `당신은 이미지 분석 전문가입니다. 사용자의 지시사항에 따라 이미지를 정확하게 분석하고 관련 정보를 추출합니다.`
-                },
                 {
                     role: "user",
                     content: [
                         {
                             type: "text",
-                            text: `다음 지시사항에 따라 이미지를 분석해주세요:\n${instruction}\n\n분석 결과만 출력하고 다른 설명은 추가하지 마세요.`
+                            text: userPrompt
                         },
                         {
                             type: "image_url",

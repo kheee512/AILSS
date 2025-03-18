@@ -31,7 +31,9 @@ export class AIReformat {
             5. 볼드체, 이탤릭체, 하이라이트 등 모든 포맷팅 제거
             6. 오직 탭 들여쓰기와 불렛 포인트만 사용하여 구조화`;
 
-            const userPrompt = `다음 텍스트를 위 규칙에 따라 재구성해주세요:
+            const userPrompt = `${systemPrompt}
+
+다음 텍스트를 위 규칙에 따라 재구성해주세요:
 
             "${selectedText}"
 

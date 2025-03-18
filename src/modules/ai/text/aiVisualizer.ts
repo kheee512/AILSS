@@ -133,7 +133,9 @@ export class AIVisualizer {
      * 서브트리 간 적절한 간격 유지
      * 복잡한 수식은 여러 레벨로 분해`;
 
-            const userPrompt = `다음 내용을 Mermaid 다이어그램으로 시각화해주세요:
+            const userPrompt = `${systemPrompt}
+
+다음 내용을 Mermaid 다이어그램으로 시각화해주세요:
 
 ${selectedText}
 

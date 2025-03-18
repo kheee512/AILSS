@@ -49,7 +49,9 @@ export class AIProcess {
 - 강조가 필요한 텍스트는 *로 감싸서 이탤릭체로 표시합니다
 - 모든 목록은 - 기호를 사용합니다`;
 
-        const userPrompt = `다음은 전체 문서입니다:
+        const userPrompt = `${systemPrompt}
+
+다음은 전체 문서입니다:
 ${fullContent}
 
 위 문서에 대해 다음 명령을 실행해주세요:

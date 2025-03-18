@@ -53,7 +53,9 @@ export class AIAnswer {
 - 강조가 필요한 텍스트는 *로 감싸서 이탤릭체로 표시합니다
 - 모든 목록은 - 기호를 사용합니다`;
 
-        const userPrompt = `다음은 전체 문서입니다:
+        const userPrompt = `${systemPrompt}
+
+다음은 전체 문서입니다:
 ${fullContent}
 
 위 문서에서 다음 선택된 텍스트에 대해 문서의 맥락을 고려하여 상세하고 정확하게 답변해주세요:

@@ -26,7 +26,9 @@ export class AILatexMath {
             주어진 자연어와 수식이 혼합된 표현을 정확하게 해석하여 Obsidian에서 지원하는 LaTeX 수학 코드로 변환하는 것이 임무입니다.
             텍스트는 \\text{} 명령어를 사용하여 처리하고, 수식 내의 영문자는 기울임체로 처리합니다.`;
 
-            const userPrompt = `다음 표현을 LaTeX 코드로 변환해주세요:
+            const userPrompt = `${systemPrompt}
+
+다음 표현을 LaTeX 코드로 변환해주세요:
 
             "${selectedText}"
 

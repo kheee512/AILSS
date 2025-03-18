@@ -55,14 +55,20 @@ export async function requestToAI(plugin: AILSSPlugin, prompt: AIPrompt): Promis
     // Notice로 통일
     new Notice(userMessage, 5000);
 
+    // 시스템 프롬프트를 유저 프롬프트에 통합
+    const combinedPrompt = {
+        ...prompt,
+        userPrompt: prompt.systemPrompt ? `${prompt.systemPrompt}\n\n${prompt.userPrompt}` : prompt.userPrompt
+    };
+
     try {
         let response = '';
         if (selectedAIModel === 'openai') {
-            response = await requestToOpenAI(plugin.settings.openAIAPIKey, prompt, openAIModel);
+            response = await requestToOpenAI(plugin.settings.openAIAPIKey, combinedPrompt, openAIModel);
         } else if (selectedAIModel === 'claude') {
-            response = await requestToClaude(plugin.settings.claudeAPIKey, prompt, claudeModel);
+            response = await requestToClaude(plugin.settings.claudeAPIKey, combinedPrompt, claudeModel);
         } else if (selectedAIModel === 'perplexity') {
-            response = await requestToPerplexity(plugin.settings.perplexityAPIKey, prompt, perplexityModel);
+            response = await requestToPerplexity(plugin.settings.perplexityAPIKey, combinedPrompt, perplexityModel);
         } else {
             throw new Error('유효하지 않은 AI 모델이 선택되었습니다.');
         }
@@ -82,18 +88,10 @@ async function requestToOpenAI(apiKey: string, prompt: AIPrompt, model: string):
         'Content-Type': 'application/json'
     };
     
-    // o 시리즈 모델인지 확인
-    const isOModel = model.startsWith('o');
-    
-    const data = isOModel ? {
+    // 모든 모델에서 유저 프롬프트만 사용하도록 수정
+    const data = {
         model: model,
         messages: [
-            { role: 'user', content: prompt.userPrompt }
-        ]
-    } : {
-        model: model,
-        messages: [
-            { role: 'system', content: prompt.systemPrompt },
             { role: 'user', content: prompt.userPrompt }
         ],
         temperature: prompt.temperature ?? 0.7,
@@ -156,7 +154,6 @@ async function requestToClaude(apiKey: string, prompt: AIPrompt, model: string):
             model: model,
             max_tokens: prompt.max_tokens,
             temperature: prompt.temperature ?? 0.7,
-            system: prompt.systemPrompt,
             messages: [
                 { role: "user", content: prompt.userPrompt }
             ],
@@ -213,7 +210,6 @@ async function requestToPerplexity(apiKey: string, prompt: AIPrompt, model: stri
     const data = {
         model: model,
         messages: [
-            { role: 'system', content: prompt.systemPrompt },
             { role: 'user', content: prompt.userPrompt }
         ],
         temperature: prompt.temperature ?? 0.7,

@@ -91,7 +91,9 @@ export class AIOCR {
 7. 모든 수학 수식은 반드시 $ 기호로 감싸서 출력 (예: $1+1=2$)
 8. 복잡한 수식이나 여러 줄의 수식은 $$ 기호로 감싸서 출력`;
 
-        const userPrompt = `이미지에서 모든 텍스트를 추출해주세요.
+        const userPrompt = `${systemPrompt}
+
+이미지에서 모든 텍스트를 추출해주세요.
 
 다음 요소들을 정확히 포함해주세요:
 - 모든 텍스트 (손글씨, 인쇄물)
@@ -110,7 +112,6 @@ export class AIOCR {
             model: "claude-3-5-sonnet-20241022",
             max_tokens: 4000,
             temperature: 0.25,
-            system: systemPrompt,
             messages: [{
                 role: "user",
                 content: [
@@ -141,21 +142,23 @@ export class AIOCR {
             'Content-Type': 'application/json'
         };
 
+        const systemPrompt = `당신은 OCR 전문가입니다. 이미지에서 모든 텍스트를 정확하게 추출하고, 수식은 LaTeX 형식으로 변환합니다. 
+모든 수학 수식은 $ 또는 $$ 기호로 감싸서 표현해야 합니다.`;
+
+        const userPrompt = `${systemPrompt}
+
+이미지에서 모든 텍스트를 추출해주세요. 수식은 LaTeX로 변환하고, 줄바꿈과 단락 구분을 유지해주세요. 
+원본 텍스트만 출력하고 다른 설명은 추가하지 마세요.`;
+
         const data = {
             model: "gpt-4o",
             messages: [
-                {
-                    role: "system",
-                    content: `당신은 OCR 전문가입니다. 이미지에서 모든 텍스트를 정확하게 추출하고, 수식은 LaTeX 형식으로 변환합니다. 
-                    모든 수학 수식은 $ 또는 $$ 기호로 감싸서 표현해야 합니다.`
-                },
                 {
                     role: "user",
                     content: [
                         {
                             type: "text",
-                            text: `이미지에서 모든 텍스트를 추출해주세요. 수식은 LaTeX로 변환하고, 줄바꿈과 단락 구분을 유지해주세요. 
-                            원본 텍스트만 출력하고 다른 설명은 추가하지 마세요.`
+                            text: userPrompt
                         },
                         {
                             type: "image_url",

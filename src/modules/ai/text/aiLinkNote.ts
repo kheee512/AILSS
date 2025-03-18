@@ -207,7 +207,9 @@ export class AILinkNote {
 - 관련 개념
 - 참고사항`;
 
-        const userPrompt = `다음은 전체 문서 내용입니다:
+        const userPrompt = `${systemPrompt}
+
+다음은 전체 문서 내용입니다:
 ${processedContent}
 
 다음은 분석이 필요한 선택된 텍스트입니다:
