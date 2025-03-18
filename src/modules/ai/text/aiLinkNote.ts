@@ -227,10 +227,7 @@ ${selectedText}
 위 형식에 맞춰 분석해주세요.`;
 
         return await requestToAI(this.plugin, {
-            systemPrompt,
-            userPrompt,
-            temperature: 0.3,
-            max_tokens: 2000
+            userPrompt
         });
     }
 

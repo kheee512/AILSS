@@ -74,10 +74,7 @@ export class AILatexMath {
 
             new Notice('LaTeX 수학 코드 생성 중...');
             const response = await requestToAI(this.plugin, {
-                systemPrompt,
-                userPrompt,
-                max_tokens: 1500,
-                temperature: 0.1
+                userPrompt
             });
             
             await AIEditorUtils.insertAfterSelection(editor, response);

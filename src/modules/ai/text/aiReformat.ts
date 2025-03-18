@@ -65,10 +65,7 @@ export class AIReformat {
 
             new Notice('텍스트 재구성 중...');
             const response = await requestToAI(this.plugin, {
-                systemPrompt,
-                userPrompt,
-                max_tokens: 2000,
-                temperature: 0.1
+                userPrompt
             });
             
             await AIEditorUtils.insertAfterSelection(editor, response);

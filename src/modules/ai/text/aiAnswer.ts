@@ -71,10 +71,7 @@ ${selectedText}`;
         try {
             new Notice('AI 답변 생성 중...');
             const response = await requestToAI(this.plugin, {
-                systemPrompt,
-                userPrompt,
-                max_tokens: 3000,  // 상세한 답변을 위해 충분한 토큰 필요
-                temperature: 0.3   // 정확성 중시, 현재 값 적절함
+                userPrompt
             });
 
             // 저장된 위치 정보를 사용하여 답변 삽입

@@ -78,10 +78,7 @@ ${selectedText}`;
         try {
             new Notice('명령 처리 중...');
             const response = await requestToAI(this.plugin, {
-                systemPrompt,
-                userPrompt,
-                max_tokens: 3000,
-                temperature: 0.3
+                userPrompt
             });
 
             editor.replaceRange(`\n${response}\n`,

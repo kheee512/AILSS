@@ -151,10 +151,7 @@ ${selectedText}
 
             new Notice('Mermaid 다이어그램 생성 중...');
             const response = await requestToAI(this.plugin, {
-                systemPrompt,
-                userPrompt,
-                max_tokens: 4500,
-                temperature: 0.15
+                userPrompt
             });
 
             //console.log('AI 응답 받음');

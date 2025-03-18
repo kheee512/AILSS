@@ -3,10 +3,10 @@ import AILSSPlugin from '../../../../main';
 import Anthropic from '@anthropic-ai/sdk';
 
 interface AIPrompt {
-    systemPrompt: string;
-    userPrompt: string;
-    temperature: number;  // 필수값으로 변경
-    max_tokens: number;
+    systemPrompt?: string;  // 선택적 필드(각 모듈에서 userPrompt에 이미 포함됨)
+    userPrompt: string;     // 실제로 사용되는 프롬프트
+    temperature?: number;   // 선택적 필드
+    max_tokens?: number;    // 선택적 필드
 }
 
 function logAPIRequest(provider: string, prompt: AIPrompt) {
@@ -148,13 +148,24 @@ async function requestToClaude(apiKey: string, prompt: AIPrompt, model: string):
     try {
         //console.log('Claude API 요청 시작');
         new Notice('Claude API 요청 시작');
-        const response = await anthropic.messages.create({
+        
+        // API 요청 객체 생성
+        const requestOptions: any = {
             model: model,
-            max_tokens: prompt.max_tokens,
+            // 기본값 설정 (Claude API에서 max_tokens는 필수임)
+            max_tokens: prompt.max_tokens || 2000,
             messages: [
+                // 참고: systemPrompt 필드는 무시하고 userPrompt만 사용 (이미 포함됨)
                 { role: "user", content: prompt.userPrompt }
             ],
-        });
+        };
+        
+        // temperature 파라미터 추가 (선택적)
+        if (prompt.temperature !== undefined) {
+            requestOptions.temperature = prompt.temperature;
+        }
+        
+        const response = await anthropic.messages.create(requestOptions);
         
         if (response.content && response.content.length > 0) {
             const content = response.content[0];
