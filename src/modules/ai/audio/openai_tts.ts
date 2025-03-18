@@ -43,6 +43,9 @@ export class OpenAITTS {
                 return;
             }
             
+            // 특수문자가 포함된 텍스트 전처리
+            const processedText = this.preprocessTextForTTS(selectedText);
+            
             new Notice('TTS 변환 중...');
             
             // API 키 확인
@@ -75,8 +78,8 @@ export class OpenAITTS {
                 ...options
             };
             
-            // API 호출하여 오디오 생성
-            const audioBuffer = await this.generateAudio(selectedText, mergedOptions);
+            // API 호출하여 오디오 생성 (전처리된 텍스트 사용)
+            const audioBuffer = await this.generateAudio(processedText, mergedOptions);
             
             // 파일 이름 생성
             const fileName = await this.generateAudioFileName(activeFile);
@@ -181,5 +184,80 @@ export class OpenAITTS {
      */
     private createAudioLink(file: TFile): string {
         return `![[${file.path}]]`;
+    }
+    
+    /**
+     * TTS를 위한 텍스트 전처리
+     * 특수문자가 포함된 텍스트를 더 자연스럽게 읽을 수 있도록 변환
+     */
+    private preprocessTextForTTS(text: string): string {
+        // 특수문자 및 기호 처리를 위한 변환 패턴들
+        const patterns = [
+            // URL 패턴 인식 및 처리
+            { 
+                regex: /(https?:\/\/[^\s]+)/g, 
+                replacement: (match: string) => `다음은 URL입니다: ${match.replace(/\//g, ' 슬래시 ').replace(/\./g, ' 점 ')}` 
+            },
+            
+            // 이메일 패턴 인식 및 처리
+            { 
+                regex: /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/g, 
+                replacement: (match: string) => match.replace('@', ' 골뱅이 ').replace(/\./g, ' 점 ') 
+            },
+            
+            // 마크다운 링크 처리
+            { 
+                regex: /\[([^\]]+)\]\(([^)]+)\)/g, 
+                replacement: (match: string, p1: string, p2: string) => `${p1}` 
+            },
+            
+            // 코드 블록 또는 인라인 코드 처리
+            {
+                regex: /`{1,3}([^`]+)`{1,3}/g,
+                replacement: (match: string, p1: string) => `다음은 코드입니다: ${p1.replace(/[{}[\]()<>]/g, ' ')}` 
+            },
+            
+            // 괄호 처리 (더 자연스럽게 발음되도록)
+            {
+                regex: /\(([^)]+)\)/g,
+                replacement: (match: string, p1: string) => ` ${p1} `
+            },
+            
+            // 다양한 기호들 처리
+            { regex: /(\d+)%/g, replacement: '$1 퍼센트' },
+            { regex: /\$/g, replacement: '달러 ' },
+            { regex: /€/g, replacement: '유로 ' },
+            { regex: /£/g, replacement: '파운드 ' },
+            { regex: /₩/g, replacement: '원 ' },
+            { regex: /\*/g, replacement: ' ' },  // 강조 기호 제거
+            { regex: /#/g, replacement: '번호 ' },
+            { regex: /\^/g, replacement: ' ' },
+            
+            // 줄바꿈 및 공백 처리
+            { regex: /\n{2,}/g, replacement: '. ' },  // 여러 줄바꿈은 문장 구분으로
+            { regex: /\s{2,}/g, replacement: ' ' }    // 여러 공백은 하나로
+        ];
+        
+        // 모든 패턴을 적용하여 텍스트 변환
+        let processedText = text;
+        for (const pattern of patterns) {
+            processedText = processedText.replace(pattern.regex, pattern.replacement as any);
+        }
+        
+        // 추가 지시문을 통해 TTS 품질 향상 (프롬프트 효과)
+        if (this.containsKoreanAndSpecialChars(processedText)) {
+            processedText = `다음 내용을 자연스럽게 읽어주세요. 특수문자와 한국어, 영어가 혼합된 내용입니다: ${processedText}`;
+        }
+        
+        return processedText;
+    }
+    
+    /**
+     * 텍스트가 한국어와 특수문자를 모두 포함하는지 확인
+     */
+    private containsKoreanAndSpecialChars(text: string): boolean {
+        const hasKorean = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(text);
+        const hasSpecialChars = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(text);
+        return hasKorean && hasSpecialChars;
     }
 }
