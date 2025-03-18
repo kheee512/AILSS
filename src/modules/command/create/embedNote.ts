@@ -43,12 +43,18 @@ export class EmbedNote {
             }
 
             const selectedText = adjustedLines.join('\n');
-            // 선택된 텍스트의 첫 줄을 파일명으로 사용
-            const firstLineContent = selectedText.split('\n')[0].trim().replace(/^[-*+]\s+/, '');
-
+            
+            // 선택된 텍스트가 없는지 확인
             if (!selectedText) {
                 throw new Error("선택된 텍스트가 없습니다.");
             }
+            
+            // 실제 에디터에서 선택된 텍스트 가져오기
+            const selection = editor.getSelection();
+            // 선택된 텍스트가 있으면 그 텍스트를 title로 사용, 없으면 첫 줄 사용
+            const titleText = selection ? selection.trim() : selectedText.split('\n')[0].trim();
+            // 리스트 마커 제거
+            const cleanedTitleText = titleText.replace(/^[-*+]\s+/, '');
 
             const activeFile = this.app.workspace.getActiveFile();
             if (!activeFile) {
@@ -78,13 +84,13 @@ export class EmbedNote {
 
             // 프론트매터 생성 (상속받은 태그만 포함)
             const noteContent = frontmatterManager.generateFrontmatter({
-                title: firstLineContent,
+                title: cleanedTitleText,
                 tags: nonDefaultTags
             }, true);
 
             // 같은 경로에 동일한 파일명이 있는지 확인
             if (await this.app.vault.adapter.exists(`${folderPath}/${fileName}`)) {
-                new Notice(`이미 "${firstLineContent}" 노트가 해당 경로에 존재합니다.`);
+                new Notice(`이미 "${cleanedTitleText}" 노트가 해당 경로에 존재합니다.`);
                 return;
             }
 
@@ -97,7 +103,7 @@ export class EmbedNote {
             const { file, fileName: createdFileName } = await PathSettings.createNote({
                 app: this.app,
                 frontmatterConfig: {
-                    title: firstLineContent,
+                    title: cleanedTitleText,
                     tags: nonDefaultTags
                 },
                 content: selectedText,
@@ -105,7 +111,6 @@ export class EmbedNote {
             });
 
             // 선택된 텍스트만 링크로 변경
-            const selection = editor.getSelection();
             const cleanedSelection = selection.replace(/^[-*+]\s+/, '');  // 리스트 마커 제거
             
             const fileNameWithoutExtension = createdFileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '');
