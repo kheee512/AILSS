@@ -87,9 +87,18 @@ export class OpenAITTS {
             // 오디오 파일 저장
             const audioFile = await this.saveAudioFile(audioBuffer, folderPath, fileName);
             
-            // 현재 커서 위치에 오디오 링크 삽입
+            // 오디오 링크 생성
             const audioLink = this.createAudioLink(audioFile);
-            editor.replaceSelection(audioLink);
+            
+            // 선택된 텍스트의 위치 정보 저장
+            const selections = editor.listSelections();
+            const lastSelection = selections[selections.length - 1];
+            const endPos = lastSelection.head.line > lastSelection.anchor.line ? 
+                lastSelection.head : lastSelection.anchor;
+                
+            // 선택된 텍스트 다음 줄에 오디오 링크 삽입
+            editor.replaceRange('\n' + audioLink,
+                {line: endPos.line, ch: editor.getLine(endPos.line).length});
             
             // Notice에 더 자세한 정보 표시
             const ttsInfo = `
