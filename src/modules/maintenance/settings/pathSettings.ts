@@ -59,10 +59,19 @@ export class PathSettings {
             await app.vault.createFolder(folderPath);
         }
 
-        // frontmatter 생성 (timestamp는 제외)
+        // 업데이트된 타임스탬프를 프론트매터에 반영
+        const updatedFrontmatterConfig = { ...frontmatterConfig };
+        // id 필드 업데이트
+        updatedFrontmatterConfig.id = timestamp.format('YYYYMMDDHHmmss');
+        // date와 updated 필드 업데이트 (한국시간 UTC+9)
+        const koreanTime = timestamp.clone().add(9, 'hours');
+        updatedFrontmatterConfig.date = koreanTime.toISOString().split('.')[0];
+        updatedFrontmatterConfig.updated = koreanTime.toISOString().split('.')[0];
+
+        // frontmatter 생성 (업데이트된 timestamp 적용)
         const frontmatterManager = new FrontmatterManager();
         const noteContent = frontmatterManager.generateFrontmatter(
-            frontmatterConfig,
+            updatedFrontmatterConfig,
             isInherited
         ) + `\n${content}`;
 
