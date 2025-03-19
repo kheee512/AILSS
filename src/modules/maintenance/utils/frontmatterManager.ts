@@ -75,13 +75,19 @@ export class FrontmatterManager {
                 const value = mergedFields[key];
                 if (Array.isArray(value)) {
                     if (key === 'aliases') {
-                        yaml += `${key}:\n${value.map(v => `  - '${v}'`).join('\n')}\n`;
+                        yaml += `${key}:\n${value.map(v => {
+                            // 값이 이미 따옴표로 감싸져 있는지 확인
+                            const cleanValue = this.removeQuotes(v);
+                            return `  - '${cleanValue}'`;
+                        }).join('\n')}\n`;
                     } else {
                         yaml += `${key}:\n${value.map(v => `  - ${v}`).join('\n')}\n`;
                     }
                 } else {
                     if (key === 'title') {
-                        yaml += `${key}: '${value}'\n`;
+                        // 값이 이미 따옴표로 감싸져 있는지 확인
+                        const cleanValue = this.removeQuotes(value);
+                        yaml += `${key}: '${cleanValue}'\n`;
                     } else {
                         yaml += `${key}: ${value}\n`;
                     }
@@ -94,13 +100,19 @@ export class FrontmatterManager {
         Object.entries(mergedFields).forEach(([key, value]) => {
             if (Array.isArray(value)) {
                 if (key === 'aliases') {
-                    yaml += `${key}:\n${value.map(v => `  - '${v}'`).join('\n')}\n`;
+                    yaml += `${key}:\n${value.map(v => {
+                        // 값이 이미 따옴표로 감싸져 있는지 확인
+                        const cleanValue = this.removeQuotes(v);
+                        return `  - '${cleanValue}'`;
+                    }).join('\n')}\n`;
                 } else {
                     yaml += `${key}:\n${value.map(v => `  - ${v}`).join('\n')}\n`;
                 }
             } else {
                 if (key === 'title') {
-                    yaml += `${key}: '${value}'\n`;
+                    // 값이 이미 따옴표로 감싸져 있는지 확인
+                    const cleanValue = this.removeQuotes(value);
+                    yaml += `${key}: '${cleanValue}'\n`;
                 } else {
                     yaml += `${key}: ${value}\n`;
                 }
@@ -109,6 +121,12 @@ export class FrontmatterManager {
         yaml += '---';
 
         return yaml;
+    }
+
+    // 텍스트에서 시작과 끝의 작은따옴표 제거
+    private removeQuotes(text: any): string {
+        if (typeof text !== 'string') return String(text);
+        return text.replace(/^'|'$/g, '');
     }
 
     // Potentiation 관련 유틸리티 메서드들
@@ -140,7 +158,12 @@ export class FrontmatterManager {
 
             if (line.startsWith('  - ')) {
                 if (currentKey) {
-                    currentArray.push(line.substring(4));
+                    let value = line.substring(4).trim();
+                    // aliases 배열 항목의 작은따옴표 제거
+                    if (currentKey === 'aliases') {
+                        value = this.removeQuotes(value);
+                    }
+                    currentArray.push(value);
                 }
             } else {
                 if (currentKey && currentArray.length > 0) {
@@ -151,10 +174,14 @@ export class FrontmatterManager {
                 const [key, ...values] = line.split(':').map(s => s.trim());
                 if (key && values.length > 0) {
                     currentKey = key;
-                    const value = values.join(':');
+                    let value = values.join(':');
                     if (value.trim() === '') {
                         currentArray = [];
                     } else {
+                        // title 필드의 작은따옴표 제거
+                        if (key === 'title') {
+                            value = this.removeQuotes(value);
+                        }
                         frontmatter[key] = value;
                         currentKey = null;
                     }
