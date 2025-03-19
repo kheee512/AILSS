@@ -16,7 +16,7 @@ export const DEFAULT_GRAPH_CONFIG = {
     "repelStrength": 13,
     "linkStrength": 1,
     "linkDistance": 30,
-    "scale": 1.8,
+    "scale": 1.4,
 
     "localJumps": 2,
     "localBacklinks": true,
