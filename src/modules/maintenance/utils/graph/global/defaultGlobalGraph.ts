@@ -94,7 +94,7 @@ export const DEFAULT_GLOBAL_GRAPH = {
   "centerStrength": 0.25,
   "repelStrength": 8,
   "linkStrength": 0.8,
-  "linkDistance": 250,
+  "linkDistance": 130,
   "scale": 0.2,
   "close": true
 } as const;

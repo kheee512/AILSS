@@ -253,11 +253,7 @@ export class OpenAITTS {
             processedText = processedText.replace(pattern.regex, pattern.replacement as any);
         }
         
-        // 추가 지시문을 통해 TTS 품질 향상 (프롬프트 효과)
-        if (this.containsKoreanAndSpecialChars(processedText)) {
-            processedText = `다음 내용을 자연스럽게 읽어주세요. 특수문자와 한국어, 영어가 혼합된 내용입니다: ${processedText}`;
-        }
-        
+        // 프롬프트 효과 제거 (사용자가 선택한 텍스트만 처리)
         return processedText;
     }
     
