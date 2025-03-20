@@ -21,6 +21,7 @@ interface IntegrityReport {
     };
     emptyFolders: string[];
     orphanedAttachments: string[];
+    brokenLinks: string[];
     invalidFrontmatters: {
         path: string;
         errors: string[];
@@ -101,6 +102,7 @@ export class IntegrityCheck {
             },
             emptyFolders: [],
             orphanedAttachments: [],
+            brokenLinks: [],
             invalidFrontmatters: [],
             invalidFileNames: []
         };
@@ -184,8 +186,8 @@ export class IntegrityCheck {
                 });
             }
 
-            // 첨부파일 링크 검사
-            await this.checkAttachments(file, content, report);
+            // 첨부파일 및 노트 링크 검사
+            await this.checkLinks(file, content, report);
         } 
         // 첨부파일 검사
         else if (this.isAttachmentFile(file)) {
@@ -289,23 +291,93 @@ export class IntegrityCheck {
         return errors;
     }
 
-    private async checkAttachments(file: TFile, content: string, report: IntegrityReport): Promise<void> {
+    private async checkLinks(file: TFile, content: string, report: IntegrityReport): Promise<void> {
         const linkRegex = /!\[\[(.*?)\]\]/g;
         let match;
 
         while ((match = linkRegex.exec(content)) !== null) {
-            const linkPath = match[1].split('|')[0].trim();
-            // 첨부파일이 현재 노트와 같은 폴더에 있는지 확인
-            const attachmentPath = `${file.parent?.path}/${linkPath}`;
-            const linkedFile = this.app.vault.getAbstractFileByPath(attachmentPath);
-
-            if (!linkedFile) {
-                report.orphanedAttachments.push(`${file.path} -> ${linkPath} (링크 깨짐)`);
+            const linkText = match[1].trim();
+            const parts = linkText.split('|');
+            const linkPath = parts[0].trim();
+            let linkedFile = null;
+            
+            // 1. 같은 폴더에서 먼저 탐색
+            // 파일명에 확장자가 있는 경우
+            if (linkPath.includes('.')) {
+                const linkedPath = `${file.parent?.path}/${linkPath}`;
+                linkedFile = this.app.vault.getAbstractFileByPath(linkedPath);
+            } 
+            // 확장자가 없는 경우 .md 확장자를 추가해 탐색
+            else {
+                const mdPath = `${file.parent?.path}/${linkPath}.md`;
+                linkedFile = this.app.vault.getAbstractFileByPath(mdPath);
             }
-            // 파일이 존재하고 첨부파일인 경우에만 이름 규칙 검사
-            else if (linkedFile instanceof TFile && this.isAttachmentFile(linkedFile)) {
-                if (!this.isValidAttachmentName(linkedFile)) {
-                    report.invalidFileNames.push(linkedFile.path);
+            
+            // 2. 14자리 숫자 ID 또는 ID-index 형식이면 YYYY/MM/DD/ 형식 폴더에서 탐색
+            if (!linkedFile) {
+                // a. 14자리 숫자 ID 패턴 확인 (YYYYMMDDHHMMSS)
+                if (/^\d{14}$/.test(linkPath)) {
+                    const year = linkPath.substring(0, 4);
+                    const month = linkPath.substring(4, 6);
+                    const day = linkPath.substring(6, 8);
+                    
+                    // YYYY/MM/DD/ 형식 폴더에서 찾기
+                    const possiblePath = `${year}/${month}/${day}/${linkPath}.md`;
+                    linkedFile = this.app.vault.getAbstractFileByPath(possiblePath);
+                }
+                // b. ID-index 형식 확인 (YYYYMMDDHHMMSS-숫자)
+                else if (/^\d{14}-\d+$/.test(linkPath)) {
+                    const baseId = linkPath.split('-')[0]; // YYYYMMDDHHMMSS 부분 추출
+                    const year = baseId.substring(0, 4);
+                    const month = baseId.substring(4, 6);
+                    const day = baseId.substring(6, 8);
+                    
+                    // 첨부파일인 경우 확장자가 붙어있을 수 있음
+                    let filePathToCheck = linkPath;
+                    if (!linkPath.includes('.')) {
+                        filePathToCheck = `${linkPath}.md`;
+                    }
+                    
+                    // YYYY/MM/DD/ 형식 폴더에서 찾기
+                    const possiblePath = `${year}/${month}/${day}/${filePathToCheck}`;
+                    linkedFile = this.app.vault.getAbstractFileByPath(possiblePath);
+                }
+            }
+            
+            // 3. 전체 vault에서 탐색
+            if (!linkedFile) {
+                if (linkPath.includes('.')) {
+                    // 확장자가 있는 경우
+                    const allFiles = this.app.vault.getAllLoadedFiles();
+                    const foundFile = allFiles.find(f => f.name === linkPath);
+                    if (foundFile instanceof TFile) {
+                        linkedFile = foundFile;
+                    }
+                } else {
+                    // 확장자가 없는 경우 마크다운 파일로 가정하고 검색
+                    const allMarkdownFiles = this.app.vault.getMarkdownFiles();
+                    const foundMdFile = allMarkdownFiles.find(mdFile => mdFile.basename === linkPath);
+                    if (foundMdFile) {
+                        linkedFile = foundMdFile;
+                    }
+                }
+            }
+            
+            // 링크 유효성 판단
+            if (!linkedFile) {
+                report.brokenLinks.push(`${file.path} -> ${linkPath} (깨진 링크)`);
+            } else if (linkedFile instanceof TFile) {
+                // 마크다운 파일인 경우 노트 이름 형식 검사
+                if (linkedFile.extension === 'md') {
+                    if (!this.isValidNoteName(linkedFile)) {
+                        report.invalidFileNames.push(`${linkedFile.path} (잘못된 노트 ID 형식)`);
+                    }
+                } 
+                // 첨부파일인 경우 이름 규칙 검사
+                else if (this.isAttachmentFile(linkedFile)) {
+                    if (!this.isValidAttachmentName(linkedFile)) {
+                        report.invalidFileNames.push(linkedFile.path);
+                    }
                 }
             }
         }
@@ -324,6 +396,11 @@ export class IntegrityCheck {
         // 첨부파일 이름이 노트ID로 시작하고, -숫자 형식으로 끝나는지 확인
         const pattern = new RegExp(`^${noteId}-\\d+$`);
         return pattern.test(file.basename);
+    }
+
+    private isValidNoteName(file: TFile): boolean {
+        // 노트 파일 이름이 14자리 숫자(YYYYMMDDHHmmss) 형식인지 확인
+        return /^\d{14}$/.test(file.basename);
     }
 
     private async generateReport(report: IntegrityReport): Promise<void> {
@@ -348,6 +425,11 @@ export class IntegrityCheck {
             content += `- ${path}\n`;
         });
 
+        content += `\n## 깨진 링크 (**${report.brokenLinks.length}**개)\n`;
+        report.brokenLinks.forEach(path => {
+            content += `- ${path}\n`;
+        });
+
         content += `\n## 잘못된 프론트매터 (**${report.invalidFrontmatters.length}**개)\n`;
         report.invalidFrontmatters.forEach(item => {
             content += `- ${item.path}\n`;
@@ -364,6 +446,7 @@ export class IntegrityCheck {
         // 총계 섹션 추가
         const totalIssues = report.emptyFolders.length + 
                            report.orphanedAttachments.length + 
+                           report.brokenLinks.length +
                            report.invalidFrontmatters.length + 
                            report.invalidFileNames.length;
 
@@ -371,6 +454,7 @@ export class IntegrityCheck {
         content += `- 전체 문제 수: **${totalIssues}**개\n`;
         content += `  - 빈 폴더: **${report.emptyFolders.length}**개\n`;
         content += `  - 고아 첨부파일: **${report.orphanedAttachments.length}**개\n`;
+        content += `  - 깨진 링크: **${report.brokenLinks.length}**개\n`;
         content += `  - 잘못된 프론트매터: **${report.invalidFrontmatters.length}**개\n`;
         content += `  - 잘못된 첨부파일명 또는 경로: **${report.invalidFileNames.length}**개\n`;
 
