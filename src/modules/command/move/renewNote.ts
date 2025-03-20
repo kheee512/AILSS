@@ -27,10 +27,26 @@ export class RenewNote {
             const content = await this.app.vault.read(activeFile);
             const frontmatter = this.frontmatterManager.parseFrontmatter(content);
             
-            // potentiation이 최대값이 아니면 갱신 불가
+            // potentiation이 7 이상이어야 갱신 가능
             const currentPotentiation = frontmatter?.potentiation ?? 0;
-            if (!FrontmatterManager.isPotentiationMaxed(currentPotentiation)) {
-                new Notice('potentiation이 최대값에 도달하지 않았습니다.');
+            if (currentPotentiation < 7) {
+                new Notice('강화 단계가 7 이상이어야 갱신 가능합니다.');
+                return;
+            }
+
+            // 생성 후 24시간이 지났는지 확인
+            const createDate = frontmatter?.date ? new Date(frontmatter.date) : null;
+            if (!createDate) {
+                new Notice('노트의 생성일을 확인할 수 없습니다.');
+                return;
+            }
+
+            const now = new Date();
+            const hoursElapsed = (now.getTime() - createDate.getTime()) / (1000 * 60 * 60);
+            
+            if (hoursElapsed < 24) {
+                const hoursRemaining = Math.ceil(24 - hoursElapsed);
+                new Notice(`노트 생성 후 24시간이 지나야 갱신 가능합니다. (${hoursRemaining}시간 남음)`);
                 return;
             }
 
