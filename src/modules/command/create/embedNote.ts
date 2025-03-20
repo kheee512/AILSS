@@ -30,6 +30,8 @@ export class EmbedNote {
             const lines: string[] = [];
             const adjustedLines: string[] = [];
 
+            // 현재 라인과 하위 들여쓰기 라인들 수집
+            let lastLineNum = cursor.line;
             for (let lineNum = cursor.line; lineNum < editor.lineCount(); lineNum++) {
                 const lineText = editor.getLine(lineNum);
                 const indentLength = lineText.match(/^(\s*)/)?.[1].length ?? 0;
@@ -37,6 +39,7 @@ export class EmbedNote {
                 if (lineNum === cursor.line || indentLength > baseIndentLength) {
                     lines.push(lineText);
                     adjustedLines.push(lineText.substring(baseIndentLength));
+                    lastLineNum = lineNum;
                 } else {
                     break;
                 }
@@ -49,10 +52,8 @@ export class EmbedNote {
                 throw new Error("선택된 텍스트가 없습니다.");
             }
             
-            // 실제 에디터에서 선택된 텍스트 가져오기
-            const selection = editor.getSelection();
-            // 선택된 텍스트가 있으면 그 텍스트를 title로 사용, 없으면 첫 줄 사용
-            const titleText = selection ? selection.trim() : selectedText.split('\n')[0].trim();
+            // 선택된 텍스트의 첫 줄을 제목으로 사용
+            const titleText = selectedText.split('\n')[0].trim();
             // 리스트 마커 제거
             const cleanedTitleText = titleText.replace(/^[-*+]\s+/, '');
 
@@ -110,19 +111,27 @@ export class EmbedNote {
                 isInherited: true
             });
 
-            // 선택된 텍스트만 링크로 변경
-            const cleanedSelection = selection.replace(/^[-*+]\s+/, '');  // 리스트 마커 제거
-            
+            // 파일명에서 확장자 제거
             const fileNameWithoutExtension = createdFileName.replace(PathSettings.DEFAULT_FILE_EXTENSION, '');
-            const newLink = `[[${fileNameWithoutExtension}|${cleanedSelection}]]`;
             
-            editor.replaceSelection(newLink);
+            // 임베드 링크 생성 (![[파일명|별칭]] 형식)
+            const embedLink = `![[${fileNameWithoutExtension}|${cleanedTitleText}]]`;
+            
+            // 원본 라인들 삭제하고 임베드 링크로 대체
+            editor.setLine(cursor.line, firstLine.substring(0, baseIndentLength) + embedLink);
+            
+            // 첫 번째 라인 이후의 모든 하위 라인 삭제 (첫 번째 라인은 이미 대체됨)
+            if (lines.length > 1) {
+                const startDeletePos = { line: cursor.line + 1, ch: 0 };
+                const endDeletePos = { line: lastLineNum + 1, ch: 0 };
+                editor.replaceRange('', startDeletePos, endDeletePos);
+            }
 
-            new Notice(`새 노트가 생성되었습니다: ${file.path}`);
+            new Notice(`새 노트가 생성되고 임베드 되었습니다: ${file.path}`);
             return file;
         } catch (error) {
-            new Notice('노트 생성 중 오류가 발생했습니다.');
-            console.error('Error creating new note:', error);
+            new Notice('노트 임베드 중 오류가 발생했습니다.');
+            console.error('Error embedding note:', error);
             throw error;
         }
     }

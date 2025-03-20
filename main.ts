@@ -26,6 +26,7 @@ import { AIProcess } from './src/modules/ai/text/aiProcess';
 import { AIReformat } from './src/modules/ai/text/aiReformat';
 import { UnlinkNotes } from './src/modules/command/update/unlinkNotes';
 import { OpenAITTS } from './src/modules/ai/audio/openai_tts';
+import { EmbedNote } from './src/modules/command/create/embedNote';
 
 
 
@@ -60,6 +61,7 @@ export default class AILSSPlugin extends Plugin {
 	private aiProcess: AIProcess;
 	private aiReformat: AIReformat;
 	private unlinkNotesManager: UnlinkNotes;
+	private embedNoteManager: EmbedNote;
 
 
 
@@ -103,9 +105,10 @@ export default class AILSSPlugin extends Plugin {
 		// RenewNote 초기화
 		this.renewNoteManager = new RenewNote(this.app, this);
 
-		// EmbedNote와 RecoverNote 초기화
+		// EmbedNote, CopyNote, RecoverNote 초기화
 		this.copyNoteManager = new CopyNote(this.app, this);
 		this.recoverNoteManager = new RecoverNote(this.app, this);
+		this.embedNoteManager = new EmbedNote(this.app, this);
 
 		// AI 이미지 생성기 초기화
 		this.aiImageCreator = new AIImageCreator(this);
@@ -188,8 +191,12 @@ export default class AILSSPlugin extends Plugin {
 			this.renewNoteManager.renewCurrentNote();
 		});
 
-		this.addRibbonIcon('copy-plus', '노트 임베드', () => {
+		this.addRibbonIcon('copy-plus', '노트 복사', () => {
 			this.copyNoteManager.createCopyNote();
+		});
+
+		this.addRibbonIcon('diamond-plus', '노트 임베드', () => {
+			this.embedNoteManager.createEmbedNote();
 		});
 
 		this.addRibbonIcon('rotate-ccw', '노트 복구', () => {
@@ -337,6 +344,13 @@ export default class AILSSPlugin extends Plugin {
 		this.addCommand({
 			id: 'embed-note',
 			name: '노트 임베드',
+			icon: 'diamond-plus',
+			editorCallback: () => this.embedNoteManager.createEmbedNote()
+		});
+
+		this.addCommand({
+			id: 'copy-note',
+			name: '노트 복사',
 			icon: 'copy-plus',
 			editorCallback: () => this.copyNoteManager.createCopyNote()
 		});
