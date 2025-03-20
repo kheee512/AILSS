@@ -3,18 +3,21 @@ import type AILSSPlugin from '../../../../main';
 import { showConfirmationDialog } from '../../../components/confirmationModal';
 import { CleanEmptyFolders } from '../../maintenance/utils/cleanEmptyFolders';
 import { RemoveNoteLinks } from './removeNoteLinks';
+import { FrontmatterManager } from '../../maintenance/utils/frontmatterManager';
 
 export class DeleteCurrentNote {
     private app: App;
     private plugin: AILSSPlugin;
     private cleanEmptyFolders: CleanEmptyFolders;
     private removeNoteLinks: RemoveNoteLinks;
+    private frontmatterManager: FrontmatterManager;
 
     constructor(app: App, plugin: AILSSPlugin) {
         this.app = app;
         this.plugin = plugin;
         this.cleanEmptyFolders = new CleanEmptyFolders(this.app, this.plugin);
         this.removeNoteLinks = new RemoveNoteLinks(this.app);
+        this.frontmatterManager = new FrontmatterManager();
     }
 
     async deleteNote(): Promise<void> {
@@ -25,8 +28,18 @@ export class DeleteCurrentNote {
                 return;
             }
 
-            // 첨부파일 찾기
+            // 프론트매터에서 강화 단계 확인
             const content = await this.app.vault.read(currentFile);
+            const frontmatter = this.frontmatterManager.parseFrontmatter(content);
+            const potentiation = frontmatter?.potentiation ?? 0;
+
+            // 강화 단계가 3~8 사이인지 확인
+            if (potentiation < 3 || potentiation > 8) {
+                new Notice(`강화 단계가 3~8 사이인 노트만 삭제할 수 있습니다. (현재: ${potentiation})`);
+                return;
+            }
+
+            // 첨부파일 찾기
             const attachmentRegex = /!\[\[(.*?)\]\]/g;
             const attachments: TFile[] = [];
             let match;
