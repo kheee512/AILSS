@@ -19,7 +19,7 @@ import { UpdateAttachments } from './src/modules/command/update/updateAttachment
 import { IntegrityCheck } from './src/modules/maintenance/utils/integrityCheck';
 import { GlobalGraphManager } from './src/modules/maintenance/utils/graph/global/globalGraphManager';
 import { RenewNote } from './src/modules/command/move/renewNote';
-import { EmbedNote } from './src/modules/command/create/embedNote';
+import { CopyNote } from './src/modules/command/create/copyNote';
 import { RecoverNote } from './src/modules/command/create/recoverNote';
 import { AIImageCreator } from './src/modules/ai/image/aiImageCreator';
 import { AIProcess } from './src/modules/ai/text/aiProcess';
@@ -54,7 +54,7 @@ export default class AILSSPlugin extends Plugin {
 	private integrityCheck: IntegrityCheck;
 	private globalGraphManager: GlobalGraphManager;
 	private renewNoteManager: RenewNote;
-	private embedNoteManager: EmbedNote;
+	private copyNoteManager: CopyNote;
 	private recoverNoteManager: RecoverNote;
 	private aiImageCreator: AIImageCreator;
 	private aiProcess: AIProcess;
@@ -104,7 +104,7 @@ export default class AILSSPlugin extends Plugin {
 		this.renewNoteManager = new RenewNote(this.app, this);
 
 		// EmbedNote와 RecoverNote 초기화
-		this.embedNoteManager = new EmbedNote(this.app, this);
+		this.copyNoteManager = new CopyNote(this.app, this);
 		this.recoverNoteManager = new RecoverNote(this.app, this);
 
 		// AI 이미지 생성기 초기화
@@ -189,7 +189,7 @@ export default class AILSSPlugin extends Plugin {
 		});
 
 		this.addRibbonIcon('copy-plus', '노트 임베드', () => {
-			this.embedNoteManager.createEmbedNote();
+			this.copyNoteManager.createCopyNote();
 		});
 
 		this.addRibbonIcon('rotate-ccw', '노트 복구', () => {
@@ -338,7 +338,7 @@ export default class AILSSPlugin extends Plugin {
 			id: 'embed-note',
 			name: '노트 임베드',
 			icon: 'copy-plus',
-			editorCallback: () => this.embedNoteManager.createEmbedNote()
+			editorCallback: () => this.copyNoteManager.createCopyNote()
 		});
 
 		this.addCommand({
